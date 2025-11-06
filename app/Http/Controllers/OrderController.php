@@ -72,7 +72,9 @@ class OrderController extends Controller
 				'route' => route('service.index'),
 				'permission' => null,
 			],
-			'CRM' => ['route' => route('crm.agenda'), 'permission' => 'handle_crm'],
+			'CRM' => [
+				'route' => route('crm.agenda'), 
+				'permission' => 'handle_crm'],
 		];
 	}
 

@@ -80,13 +80,34 @@ class GraphicController extends Controller
         $orderServicesChart = $this->serviceOrders(); // Ordenes de servicio por admin
 
         $navigation = [
-            'Agenda'               => route('crm.agenda'),
-            'Clientes'             => route('customer.index'),
-            'Sedes'                => route('customer.index.sedes'),
-            'Clientes potenciales' => Route('customer.index.leads'),
-                        'Ordenes de servicio'  => route('order.index'),
-            'Estadisticas'         => route('crm.chart.dashboard'),
-            //'Facturacion'          => route('invoices.index'),
+            'Agenda' => [
+                'route' => route('crm.agenda'),
+                'permission' => 'handle_planning'
+            ],
+            'Clientes' => [
+                'route' => route('customer.index'),
+                'permission' => null
+            ],
+            'Sedes' => [
+                'route' => route('customer.index.sedes'),
+                'permission' => 'show_sedes'
+            ],
+            'Clientes potenciales' => [
+                'route' => route('customer.index.leads'),
+                'permission' => null
+            ],
+            'Ordenes de servicio' => [
+                'route' => route('order.index'),
+                'permission' => null
+            ],
+            'Estadisticas' => [
+                'route' => route('crm.chart.dashboard'),
+                'permission' => null
+            ],
+            /*'Facturacion' => [
+                'route' => route('invoices.index'),
+                'permission' => 'handle_invoice'
+            ]*/
         ];
 
         return view('crm.charts.dashboard', compact(
