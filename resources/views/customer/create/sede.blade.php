@@ -27,27 +27,27 @@
                     </div>
                     <div class="col-lg-4 col-12 mb-3">
                         <label for="name" class="form-label is-required"> {{ __('customer.data.name') }}: </label>
-                        <input type="text" class="form-control" id="name" name="name">
+                        <input type="text" class="form-control" id="name" name="name" value="Sede - {{ $customer_matrix->name }}" maxlength="50">
                     </div>
                     <div class="col-lg-4 col-12 mb-3">
                         <label for="email" class="form-label">{{ __('customer.data.email') }}: </label>
-                        <input type="email" class="form-control" id="email" name="email" maxlength="50"
+                        <input type="email" class="form-control" id="email" name="email" value="{{ $customer_matrix->email }}" maxlength="50"
                             placeholder="example@mail.com" autocomplete="off">
                     </div>
                     <div class="col-lg-6 col-12 mb-3">
                         <label for="address" class="form-label is-required">{{ __('customer.data.address') }}</label>
-                        <input type="text" class="form-control" id="address" name="address" maxlength="50"
+                        <input type="text" class="form-control" id="address" name="address" value="{{ $customer_matrix->address }}" maxlength="50" 
                             placeholder="#00 Col. Example" required>
                     </div>
                     <div class="col-lg-3 col-12 mb-3">
                         <label for="phone" class="form-label is-required">{{ __('customer.data.phone') }}</label>
-                        <input type="text" min=1 class="form-control" id="phone" placeholder="0000000000"
+                        <input type="text" min=1 class="form-control" id="phone" value="{{ $customer_matrix->phone }}  }}" placeholder="0000000000"
                             maxlength="25" name="phone" autocomplete="off" required>
                     </div>
 
                     <div class="col-lg-3 col-12 mb-3">
                         <label for="zip_code" class="form-label is-required">{{ __('customer.data.zip_code') }} :</label>
-                        <input type="text" class="form-control" name="zip_code" placeholder="00000" minlength="5"
+                        <input type="text" class="form-control" name="zip_code" value="{{ $customer_matrix->zip_code }}" placeholder="00000" minlength="5"
                             maxlength="5" id="zip_code" required>
                     </div>
                     <div class="col-lg-3 col-12 mb-3">
@@ -94,7 +94,7 @@
                         <label for="branch" class="form-label is-required">{{ __('customer.data.branch') }}:</label>
                         <select type="text" class="form-select " name="branch_id" id="branch">
                             @foreach ($branches as $item)
-                                <option value="{{ $item->id }}">{{ $item->name }}</option>
+                                <option value="{{ $item->id }}" {{ $customer_matrix->branch_id == $item->id ? 'selected' : '' }}>{{ $item->name }}</option>
                             @endforeach
                         </select>
                     </div>
