@@ -110,16 +110,26 @@ class UserController extends Controller
 		$branches = Branch::all();
 		$companies = Company::all();
 
-		$navigation = [
-			'Usuario interno' => [
-				'route' => route('user.create'),
-				'permission' => null
-			],
-			'Cliente' => [
-				'route' => route('user.create.client'),
-				'permission' => null
-			]
-		];
+		if (auth()->user()->isSuperAdmin()) {
+			$navigation = [
+				'Usuario interno' => [
+					'route' => route('user.create'),
+					'permission' => null
+				],
+				'Cliente' => [
+					'route' => route('user.create.client'),
+					'permission' => null
+				]
+			];
+		} else {
+			$navigation = [
+				'Cliente' => [
+					'route' => route('user.create.client'),
+					'permission' => null
+				]
+			];
+		}
+
 
 		return view(
 			'user.create.intern',
@@ -148,16 +158,25 @@ class UserController extends Controller
 			];
 		}*/
 
-		$navigation = [
-			'Usuario interno' => [
-				'route' => route('user.create'),
-				'permission' => null
-			],
-			'Cliente' => [
-				'route' => route('user.create.client'),
-				'permission' => null
-			]
-		];
+		if (auth()->user()->isSuperAdmin()) {
+			$navigation = [
+				'Usuario interno' => [
+					'route' => route('user.create'),
+					'permission' => null
+				],
+				'Cliente' => [
+					'route' => route('user.create.client'),
+					'permission' => null
+				]
+			];
+		} else {
+			$navigation = [
+				'Cliente' => [
+					'route' => route('user.create.client'),
+					'permission' => null
+				]
+			];
+		}
 
 		return view(
 			'user.create.client',
