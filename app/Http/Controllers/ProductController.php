@@ -39,19 +39,52 @@ class ProductController extends Controller
     private $size = 50;
 
     public $navigation = [
-        'Almacenes' => '/stock',
-        'Lotes' => '/lot/index',
-        'Productos' => '/products',
-        'Movimientos' => '/stock/movements',
-        'Consumos en ordenes' => '/stock/movements/orders',
-        'Consumos' => '/consumptions/',
-        // 'Zonas' => '/customer-zones',
-        // 'Pedidos' => '/consumptions',
-        // 'Productos en ordenes' => '/stock/orders-products',
-        //'Estadisticas' => 'stock/analytics',
-        // 'Compras' => '/purchase-requisition/purchases',
-    ];  
-
+        'Almacenes' => [
+            'route' => '/stock',
+            'permission' => null
+        ],
+        'Lotes' => [
+            'route' => '/lot/index',
+            'permission' => null
+        ],
+        'Productos' => [
+            'route' => '/products',
+            'permission' => null
+        ],
+        'Movimientos' => [
+            'route' => '/stock/movements',
+            'permission' => null
+        ],
+        'Consumos en ordenes' => [
+            'route' => '/stock/movements/orders',
+            'permission' => null
+        ],
+        'Consumos' => [
+            'route' => '/consumptions/',
+            'permission' => null
+        ],
+        // 'Zonas' => [
+        //     'route' => '/customer-zones',
+        //     'permission' => null
+        // ],
+        // 'Pedidos' => [
+        //     'route' => '/consumptions',
+        //     'permission' => null
+        // ],
+        // 'Productos en ordenes' => [
+        //     'route' => '/stock/orders-products',
+        //     'permission' => null
+        // ],
+        //'Estadisticas' => [
+        //    'route' => 'stock/analytics',
+        //    'permission' => null
+        //],
+        // 'Compras' => [
+        //     'route' => '/purchase-requisition/purchases',
+        //     'permission' => null
+        // ],
+    ];
+    
     public function getImage(string $url)
     {
         if (!Storage::disk('public')->exists($url)) {
@@ -80,7 +113,7 @@ class ProductController extends Controller
         if ($request->filled('business_name')) {
             $query->where(function ($q) use ($request) {
                 $q->where('manufacturer', 'like', '%' . $request->business_name . '%')
-                  ->orWhere('supplier_name', 'like', '%' . $request->business_name . '%');
+                    ->orWhere('supplier_name', 'like', '%' . $request->business_name . '%');
             });
         }
 
@@ -453,36 +486,36 @@ class ProductController extends Controller
     public function search(Request $request)
     {
         $size = $request->input('size');
-		$direction = $request->input('direction', 'DESC');
-		$query_products = ProductCatalog::query();
+        $direction = $request->input('direction', 'DESC');
+        $query_products = ProductCatalog::query();
 
-		if ($request->name) {
-			$query_products = $query_products->where('name', 'LIKE', '%' . $request->name . '%');
-		}
+        if ($request->name) {
+            $query_products = $query_products->where('name', 'LIKE', '%' . $request->name . '%');
+        }
 
-		if ($request->business_name) {
-			$query_products = $query_products->where('business_name', 'LIKE', '%' . $request->business_name . '%');
-		}
+        if ($request->business_name) {
+            $query_products = $query_products->where('business_name', 'LIKE', '%' . $request->business_name . '%');
+        }
 
-		if ($request->active_ingredient) {
-			$query_products = $query_products->where('active_ingredient', 'LIKE', '%' . $request->active_ingredient . '%');
-		}
+        if ($request->active_ingredient) {
+            $query_products = $query_products->where('active_ingredient', 'LIKE', '%' . $request->active_ingredient . '%');
+        }
 
-		if ($request->presentation_id) {
-			$query_products = $query_products->where('presentation_id', $request->presentation_id);
-		}
+        if ($request->presentation_id) {
+            $query_products = $query_products->where('presentation_id', $request->presentation_id);
+        }
 
 
-		$products = $query_products->orderBy('name', $direction ?? 'DESC')->paginate($size ?? $this->size)->appends($request->all());
+        $products = $query_products->orderBy('name', $direction ?? 'DESC')->paginate($size ?? $this->size)->appends($request->all());
         $presentations = Presentation::all();
 
-		return view(
-			'product.index',
-			compact(
-				'products',
-				'presentations',
-			)
-		);
+        return view(
+            'product.index',
+            compact(
+                'products',
+                'presentations',
+            )
+        );
     }
 
     public function destroy(string $id)
