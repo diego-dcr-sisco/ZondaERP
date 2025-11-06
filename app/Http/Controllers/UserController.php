@@ -111,8 +111,14 @@ class UserController extends Controller
 		$companies = Company::all();
 
 		$navigation = [
-			'Usuario interno' => route('user.create'),
-			'Cliente' => route('user.create.client')
+			'Usuario interno' => [
+				'route' => route('user.create'),
+				'permission' => null
+			],
+			'Cliente' => [
+				'route' => route('user.create.client'),
+				'permission' => null
+			]
 		];
 
 		return view(
@@ -135,15 +141,23 @@ class UserController extends Controller
 		$local_dirs = $disk->directories($this->path);
 		sort($local_dirs);
 
-		$navigation = [];
-
-		if (auth()->user()->isSuperAdmin()) {
+		/*if (auth()->user()->isSuperAdmin()) {
 			$navigation = [
 				'Usuario interno' => route('user.create'),
 				'Cliente' => route('user.create.client')
 			];
-		}
+		}*/
 
+		$navigation = [
+			'Usuario interno' => [
+				'route' => route('user.create'),
+				'permission' => null
+			],
+			'Cliente' => [
+				'route' => route('user.create.client'),
+				'permission' => null
+			]
+		];
 
 		return view(
 			'user.create.client',
