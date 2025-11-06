@@ -29,6 +29,8 @@ class ClientController extends Controller
     private $dir_names = [];
     private $disk_type = 'public'; // Cambiar a 'google' o 'public' según necesites
 
+    private $navigation;
+
     private $size = 50;
 
     private $mip_directories = [
@@ -50,6 +52,20 @@ class ClientController extends Controller
         'Señaléticas',
         'Pago seguro'
     ];
+
+    public function __construct()
+    {
+        $this->navigation = [
+            'Carpetas' => [
+                'route' => route('client.system.index', ['path' => $this->path]),
+                'permission' => 'handle_client_system'
+            ],
+            'Reportes' => [
+                'route' => route('client.reports'),
+                'permission' => 'handle_client_system'
+            ]
+        ];
+    }
 
     // Método helper para obtener el disco configurado
     private function getDisk()
@@ -195,10 +211,7 @@ class ClientController extends Controller
 
     public function directories(string $path)
     {
-        $navigation = [
-            'Carpetas' => route('client.system.index', ['path' => $this->path]),
-            'Reportes' => route('client.reports')
-        ];
+        $navigation = $this->navigation;
 
         $mip_dirs = $mip_files = [];
         $disk = $this->getDisk();
@@ -809,10 +822,7 @@ class ClientController extends Controller
     public function reports(Request $request)
     {
         //dd($request->all());
-        $navigation = [
-            'Carpetas' => route('client.system.index', ['path' => $this->path]),
-            'Reportes' => route('client.reports')
-        ];
+        $navigation = $this->navigation;
 
         $user = User::find(auth()->user()->id);
         $business_lines = LineBusiness::all();
