@@ -85,7 +85,7 @@ class UserController extends Controller
 		$types = ['Usuario Interno', 'Cliente'];
 
 		$navigation = [
-			'Usuarios' => route('user.index'),
+			'Usuarios' => ['route' => route('user.index'), 'permission' => null],
 		];
 
 		return view(
@@ -136,7 +136,7 @@ class UserController extends Controller
 		sort($local_dirs);
 
 		$navigation = [];
-    
+
 		if (auth()->user()->isSuperAdmin()) {
 			$navigation = [
 				'Usuario interno' => route('user.create'),
@@ -210,7 +210,7 @@ class UserController extends Controller
 		// Aumentar la cantidad de usuarios del tenant
 		$tenant = Tenant::find($user->tenant_id);
 		$tenant->users_amount++;
-    	$tenant->save();
+		$tenant->save();
 
 
 		// Definir el permiso para el usuario
@@ -278,7 +278,7 @@ class UserController extends Controller
 		// Aumentar la cantidad de usuarios del tenant
 		$tenant = Tenant::find($user->tenant_id);
 		$tenant->users_amount++;
-    	$tenant->save();
+		$tenant->save();
 
 
 		// Definir el rol para el usuario sin departamento de trabajo
@@ -579,8 +579,8 @@ class UserController extends Controller
 	public function uploadFileByName(Request $request, string $userId)
 	{
 		$request->validate([
-			'file'         => 'required|mimes:jpeg,png,jpg,pdf|max:5120',
-			'filename'     => 'required|string|max:255',
+			'file' => 'required|mimes:jpeg,png,jpg,pdf|max:5120',
+			'filename' => 'required|string|max:255',
 			'expirated_at' => 'nullable|date',
 		]);
 
@@ -596,16 +596,16 @@ class UserController extends Controller
 
 		$disk->put($filePath, file_get_contents($file));
 
-		
+
 
 		UserFile::create([
-			'user_id'     => $user->id,
-			'file_name'   => $request->input('filename'),
-			'path'        => $filePath,
-			'expirated_at'=> $request->input('expirated_at'),
+			'user_id' => $user->id,
+			'file_name' => $request->input('filename'),
+			'path' => $filePath,
+			'expirated_at' => $request->input('expirated_at'),
 		]);
 
-    return back();
+		return back();
 	}
 
 	public function downloadFile(string $id)
@@ -777,10 +777,10 @@ class UserController extends Controller
 		// Restar a la cantidad de usuarios del tenant
 		$tenant = Tenant::find($user->tenant_id);
 		$tenant->users_amount--;
-    	$tenant->save();
+		$tenant->save();
 
 
-		
+
 
 		return redirect()->route('user.index');
 	}
