@@ -69,6 +69,37 @@ class CustomerController extends Controller
 
     public function __construct()
     {
+        $this->navigation = [
+            'Agenda' => [
+                'route' => route('crm.agenda'),
+                'permission' => 'handle_crm'
+            ],
+            'Clientes' => [
+                'route' => route('customer.index'),
+                'permission' => null
+            ],
+            'Sedes' => [
+                'route' => route('customer.index.sedes'),
+                'permission' => 'show_sedes'
+            ],
+            'Clientes potenciales' => [
+                'route' => route('customer.index.leads'),
+                'permission' => null
+            ],
+            'Ordenes de servicio' => [
+                'route' => route('order.index'),
+                'permission' => null
+            ],
+            'Estadisticas' => [
+                'route' => route('crm.chart.dashboard'),
+                'permission' => null
+            ],
+            //'Facturacion' => [
+            //    'route' => route('invoices.index'),
+            //    'permission' => null
+            //],
+        ];
+
         $this->navigation_invoices = [
             'Dashboard' => route('invoices.dashboard'),
             'Contribuyentes' => route('invoices.customers'),
