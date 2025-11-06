@@ -111,7 +111,7 @@ class LoginRequest extends FormRequest
         }
 
         // DEPURACIÓN 5: Verificar estado del usuario
-        if ($user->status_id !== 2) { // Ajusta según tu lógica de estados
+        if ($user->status_id != 2) { // Ajusta según tu lógica de estados
             \Log::warning('User not active', [
                 'user_id' => $user->id,
                 'status_id' => $user->status_id
