@@ -21,14 +21,14 @@
     }
 </style>
 
-    <ul class="nav flex-column">
-        @isset($navigation)
-            @foreach ($navigation as $key => $nav)
-                @if(tenant_can($nav['permission']))
-                    <li class="nav-item">
-                        <a class="nav-link navbar-item" href="{{ $nav['route'] }}">{{ $key }}</a>
-                    </li>
-                @endif
-            @endforeach
-        @endisset
-    </ul>
+<ul class="nav flex-column">
+    @isset($navigation)
+        @foreach ($navigation as $key => $nav)
+            @if ($nav['permission'] === null || tenant_can($nav['permission']))
+                <li class="nav-item">
+                    <a class="nav-link navbar-item" href="{{ $nav['route'] }}">{{ $key }}</a>
+                </li>
+            @endif
+        @endforeach
+    @endisset
+</ul>
