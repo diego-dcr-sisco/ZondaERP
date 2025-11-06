@@ -57,12 +57,22 @@ class OrderController extends Controller
 		return $newDate->format('Y-m-d');
 	}
 
-	public function __construct() {
+	public function __construct()
+	{
 		$this->navigation = [
-			'Ordenes de servicios' => route('order.index',),
-			'Contratos' => route('contract.index'),
-			'Servicios' => route('service.index'),
-			'CRM' => route('crm.agenda'),
+			'Ordenes de servicios' => [
+				'route' => route('order.index'),
+				'permission' => null,
+			],
+			'Contratos' => [
+				'route' => route('contract.index'),
+				'permission' => 'handle_contracts',
+			],
+			'Servicios' => [
+				'route' => route('service.index'),
+				'permission' => null,
+			],
+			'CRM' => ['route' => route('crm.agenda'), 'permission' => 'handle_crm'],
 		];
 	}
 
@@ -73,7 +83,7 @@ class OrderController extends Controller
 		$size = $this->size;
 
 		$customer_ranges = Customer::where('general_sedes', '!=', 0)->orWhere('service_type_id', 1)->orderBy('name', 'asc')->get();
-		$navigation = $this->navigation; 
+		$navigation = $this->navigation;
 
 		return view(
 			'order.index',
@@ -384,7 +394,7 @@ class OrderController extends Controller
 
 
 		$results = $customersQuery->get()->merge($sedesQuery->get());
-		
+
 
 		return response()->json([
 			'customers' => $results->map(function ($customer) {
@@ -612,257 +622,257 @@ class OrderController extends Controller
 			$order->update(['closed_by' => $order->technicians()->first()->user_id]);
 		}*/
 
-        return back();
-    }
+		return back();
+	}
 
-    public function cancel(string $id): RedirectResponse
-    {
-        $order = Order::find($id);
-        if ($order) {
-            $order->status_id = 5;
-            $order->save();
-        }
-        return back();
-    }
+	public function cancel(string $id): RedirectResponse
+	{
+		$order = Order::find($id);
+		if ($order) {
+			$order->status_id = 5;
+			$order->save();
+		}
+		return back();
+	}
 
-    public function destroy(string $id): RedirectResponse
-    {
-        $order = Order::find($id);
-        $order->delete();
-        return back();
-    }
+	public function destroy(string $id): RedirectResponse
+	{
+		$order = Order::find($id);
+		$order->delete();
+		return back();
+	}
 
-    private function setFile($data, $name, $extension = 'png')
-    {
-        $file_name = $name . '.' . $extension;
-        $directory = storage_path($this->files_path);
-        if (! file_exists($directory)) {
-            mkdir($directory, 0777, true);
-        }
-        $path = $directory . '/' . $file_name;
-        file_put_contents($path, $data);
-        return $path;
-    }
+	private function setFile($data, $name, $extension = 'png')
+	{
+		$file_name = $name . '.' . $extension;
+		$directory = storage_path($this->files_path);
+		if (!file_exists($directory)) {
+			mkdir($directory, 0777, true);
+		}
+		$path = $directory . '/' . $file_name;
+		file_put_contents($path, $data);
+		return $path;
+	}
 
-    public function getControlPoints(Request $request)
-    {
-        $floorplanID = $request->input('floorplan_id');
-        $orderID     = $request->input('order_id');
-        $version     = $request->input('version');
-        $data        = [];
+	public function getControlPoints(Request $request)
+	{
+		$floorplanID = $request->input('floorplan_id');
+		$orderID = $request->input('order_id');
+		$version = $request->input('version');
+		$data = [];
 
-        $devices = Device::where('floorplan_id', $floorplanID)->where('version', $version)->get();
+		$devices = Device::where('floorplan_id', $floorplanID)->where('version', $version)->get();
 
-        foreach ($devices as $device) {
-            $questions = [];
-            $incidents = $device->incidents()->where('order_id', $orderID)->get();
-            foreach ($incidents as $incident) {
-                $questions[] = [
-                    'optionID' => $incident->question->option->id,
-                    'question' => $incident->question()->first()->question,
-                    'answer'   => $incident->answer,
-                ];
-            }
+		foreach ($devices as $device) {
+			$questions = [];
+			$incidents = $device->incidents()->where('order_id', $orderID)->get();
+			foreach ($incidents as $incident) {
+				$questions[] = [
+					'optionID' => $incident->question->option->id,
+					'question' => $incident->question()->first()->question,
+					'answer' => $incident->answer,
+				];
+			}
 
-            $data[] = [
-                'deviceID'  => $device->id,
-                'nplan'     => $device->nplan,
-                'name'      => optional($device->controlPoint->product)->name,
-                'zone'      => $device->applicationArea()->first()->name,
-                'questions' => ! empty($questions) ? $questions : $device->questions()->get(),
-            ];
-        }
-        return response()->json($data);
-    }
+			$data[] = [
+				'deviceID' => $device->id,
+				'nplan' => $device->nplan,
+				'name' => optional($device->controlPoint->product)->name,
+				'zone' => $device->applicationArea()->first()->name,
+				'questions' => !empty($questions) ? $questions : $device->questions()->get(),
+			];
+		}
+		return response()->json($data);
+	}
 
-    public function filter(Request $request)
-    {
-        //dd($request->all());
-        // Obtener parámetros de ordenamiento
-        $size      = $request->input('size');
-        $sort      = $request->input('sort', 'id');
-        $direction = $request->input('direction', 'DESC');
+	public function filter(Request $request)
+	{
+		//dd($request->all());
+		// Obtener parámetros de ordenamiento
+		$size = $request->input('size');
+		$sort = $request->input('sort', 'id');
+		$direction = $request->input('direction', 'DESC');
 
-        // Construir consulta base
-        $query = Order::query();
+		// Construir consulta base
+		$query = Order::query();
 
-        // Aplicar filtros (mantén tus filtros existentes)
-        if ($request->filled('customer')) {
-            $searchTerm  = '%' . $request->input('customer') . '%';
-            $customerIds = Customer::where('name', 'LIKE', $searchTerm)->pluck('id');
-            $query->whereIn('customer_id', $customerIds);
-        }
+		// Aplicar filtros (mantén tus filtros existentes)
+		if ($request->filled('customer')) {
+			$searchTerm = '%' . $request->input('customer') . '%';
+			$customerIds = Customer::where('name', 'LIKE', $searchTerm)->pluck('id');
+			$query->whereIn('customer_id', $customerIds);
+		}
 
-        if ($request->filled('status')) {
-            $query->where('status_id', $request->input('status'));
-        }
+		if ($request->filled('status')) {
+			$query->where('status_id', $request->input('status'));
+		}
 
-        if ($request->filled('service')) {
-            $serviceName = '%' . $request->input('service') . '%';
-            $serviceIds  = Service::where('name', 'LIKE', $serviceName)->pluck('id');
-            $orderIds    = OrderService::whereIn('service_id', $serviceIds)->pluck('order_id');
-            $query->whereIn('id', $orderIds);
-        }
+		if ($request->filled('service')) {
+			$serviceName = '%' . $request->input('service') . '%';
+			$serviceIds = Service::where('name', 'LIKE', $serviceName)->pluck('id');
+			$orderIds = OrderService::whereIn('service_id', $serviceIds)->pluck('order_id');
+			$query->whereIn('id', $orderIds);
+		}
 
-        if ($request->filled('date_range')) {
-            [$startDate, $endDate] = array_map(function ($d) {
-                return Carbon::createFromFormat('d/m/Y', trim($d));
-            }, explode(' - ', $request->input('date_range')));
+		if ($request->filled('date_range')) {
+			[$startDate, $endDate] = array_map(function ($d) {
+				return Carbon::createFromFormat('d/m/Y', trim($d));
+			}, explode(' - ', $request->input('date_range')));
 
-            $query->whereBetween('programmed_date', [
-                $startDate->format('Y-m-d'),
-                $endDate->format('Y-m-d'),
-            ]);
-        }
+			$query->whereBetween('programmed_date', [
+				$startDate->format('Y-m-d'),
+				$endDate->format('Y-m-d'),
+			]);
+		}
 
-        if ($request->filled('time')) {
-            $query->whereTime('start_time', $request->input('time'));
-        }
+		if ($request->filled('time')) {
+			$query->whereTime('start_time', $request->input('time'));
+		}
 
-        if ($request->filled('order_type')) {
-            if ($request->input('order_type') == 'MIP') {
-                $query->where('contract_id', '>', 0);
-            } else {
-                $query->whereNull('contract_id');
-            }
-        }
+		if ($request->filled('order_type')) {
+			if ($request->input('order_type') == 'MIP') {
+				$query->where('contract_id', '>', 0);
+			} else {
+				$query->whereNull('contract_id');
+			}
+		}
 
-        if ($request->filled('signature_status')) {
-            if ($request->input('signature_status') == 'signed') {
-                $query->whereNotNull('customer_signature');
-            } elseif ($request->input('signature_status') == 'unsigned') {
-                $query->whereNull('customer_signature');
-            }
-        }
+		if ($request->filled('signature_status')) {
+			if ($request->input('signature_status') == 'signed') {
+				$query->whereNotNull('customer_signature');
+			} elseif ($request->input('signature_status') == 'unsigned') {
+				$query->whereNull('customer_signature');
+			}
+		}
 
-        // Aplicar ordenamiento después de los filtros
-        $query->orderBy($sort, $direction);
-        $size = $size ?? $this->size;
+		// Aplicar ordenamiento después de los filtros
+		$query->orderBy($sort, $direction);
+		$size = $size ?? $this->size;
 
-        // Paginar resultados
-        $orders = $query->paginate($size)
-            ->appends($request->all());
+		// Paginar resultados
+		$orders = $query->paginate($size)
+			->appends($request->all());
 
-        $order_status    = OrderStatus::all();
-        $customer_ranges = Customer::where('general_sedes', '!=', 0)->orWhere('service_type_id', 1)->orderBy('name', 'asc')->get();
-        $size            = $this->size;
+		$order_status = OrderStatus::all();
+		$customer_ranges = Customer::where('general_sedes', '!=', 0)->orWhere('service_type_id', 1)->orderBy('name', 'asc')->get();
+		$size = $this->size;
 
-        return view(
-            'order.index',
-            compact(
-                'orders',
-                'order_status',
-                'size',
-                'customer_ranges'
-            )
-        );
-    }
+		return view(
+			'order.index',
+			compact(
+				'orders',
+				'order_status',
+				'size',
+				'customer_ranges'
+			)
+		);
+	}
 
-    public function getTechniciansInRange(Request $request)
-    {
-        $tech_data = [];
-        try {
-            $customer_id = $request->input('customer_id');
-            $date        = $request->input('date');
+	public function getTechniciansInRange(Request $request)
+	{
+		$tech_data = [];
+		try {
+			$customer_id = $request->input('customer_id');
+			$date = $request->input('date');
 
-            // Validación básica de los parámetros requeridos
-            if (! $customer_id) {
-                return response()->json(['error' => 'El parámetro customer_id es requerido'], 400);
-            }
+			// Validación básica de los parámetros requeridos
+			if (!$customer_id) {
+				return response()->json(['error' => 'El parámetro customer_id es requerido'], 400);
+			}
 
-            $orders = Order::where('customer_id', $customer_id)->where('status_id', 1);
+			$orders = Order::where('customer_id', $customer_id)->where('status_id', 1);
 
-            if ($date) {
-                try {
-                    [$startDate, $endDate] = array_map(function ($d) {
-                        return Carbon::createFromFormat('d/m/Y', trim($d));
-                    }, explode(' - ', $date));
+			if ($date) {
+				try {
+					[$startDate, $endDate] = array_map(function ($d) {
+						return Carbon::createFromFormat('d/m/Y', trim($d));
+					}, explode(' - ', $date));
 
-                    $startDate = $startDate->format('Y-m-d');
-                    $endDate   = $endDate->format('Y-m-d');
+					$startDate = $startDate->format('Y-m-d');
+					$endDate = $endDate->format('Y-m-d');
 
-                    $orders = $orders->whereBetween('programmed_date', [$startDate, $endDate]);
-                } catch (\Exception $e) {
-                    return response()->json([
-                        'error' => 'Formato de fecha inválido. Use el formato dd/mm/yyyy - dd/mm/yyyy',
-                    ], 400);
-                }
-            }
+					$orders = $orders->whereBetween('programmed_date', [$startDate, $endDate]);
+				} catch (\Exception $e) {
+					return response()->json([
+						'error' => 'Formato de fecha inválido. Use el formato dd/mm/yyyy - dd/mm/yyyy',
+					], 400);
+				}
+			}
 
-            $orders      = $orders->get();
-            $technicians = [];
+			$orders = $orders->get();
+			$technicians = [];
 
-            foreach ($orders as $order) {
-                foreach ($order->technicians as $technician) {
-                    if (! in_array($technician->id, $technicians)) {
-                        $technicians[] = $technician->id;
-                    }
-                }
-            }
+			foreach ($orders as $order) {
+				foreach ($order->technicians as $technician) {
+					if (!in_array($technician->id, $technicians)) {
+						$technicians[] = $technician->id;
+					}
+				}
+			}
 
-            $found_technicians = Technician::whereIn('id', $technicians)->get();
-            $technicians       = Technician::with('user')
-                ->whereIn('user_id', Technician::pluck('user_id'))
-                ->join('user', 'technician.user_id', '=', 'user.id')
-                ->orderBy('user.name', 'ASC')
-                ->select('technician.*')
-                ->get();
+			$found_technicians = Technician::whereIn('id', $technicians)->get();
+			$technicians = Technician::with('user')
+				->whereIn('user_id', Technician::pluck('user_id'))
+				->join('user', 'technician.user_id', '=', 'user.id')
+				->orderBy('user.name', 'ASC')
+				->select('technician.*')
+				->get();
 
-            foreach ($technicians as $tech) {
-                $tech_data[] = [
-                    'id'          => $tech->id,
-                    'name'        => $tech->user->name,
-                    'is_assigned' => in_array($tech->id, $found_technicians->pluck('id')->toArray()),
-                ];
-            }
+			foreach ($technicians as $tech) {
+				$tech_data[] = [
+					'id' => $tech->id,
+					'name' => $tech->user->name,
+					'is_assigned' => in_array($tech->id, $found_technicians->pluck('id')->toArray()),
+				];
+			}
 
-            return response()->json([
-                'technicians' => $tech_data,
-                'orders'      => $orders->pluck('id')->toArray(),
-                'show'        => count($tech_data) > 0,
-            ], 200);
+			return response()->json([
+				'technicians' => $tech_data,
+				'orders' => $orders->pluck('id')->toArray(),
+				'show' => count($tech_data) > 0,
+			], 200);
 
-        } catch (\Exception $e) {
-            // Log del error (recomendado)
-            \Log::error('Error en getTechniciansInRange: ' . $e->getMessage());
+		} catch (\Exception $e) {
+			// Log del error (recomendado)
+			\Log::error('Error en getTechniciansInRange: ' . $e->getMessage());
 
-            return response()->json([
-                'error'   => 'Ocurrió un error al procesar la solicitud',
-                'details' => config('app.debug') ? $e->getMessage() : null,
-            ], 500);
-        }
-    }
+			return response()->json([
+				'error' => 'Ocurrió un error al procesar la solicitud',
+				'details' => config('app.debug') ? $e->getMessage() : null,
+			], 500);
+		}
+	}
 
-    public function assignTechnicians(Request $request)
-    {
-        $technicians = json_decode($request->input('technicians'));
-        $orders      = json_decode($request->input('orders'));
+	public function assignTechnicians(Request $request)
+	{
+		$technicians = json_decode($request->input('technicians'));
+		$orders = json_decode($request->input('orders'));
 
-        $updated_technicians = [];
+		$updated_technicians = [];
 
-        if (! $orders || ! $technicians) {
-            return response()->json(['error' => 'Parámetros incompletos'], 400);
-        }
+		if (!$orders || !$technicians) {
+			return response()->json(['error' => 'Parámetros incompletos'], 400);
+		}
 
-        try {
-            $orders = Order::whereIn('id', $orders)->where('status_id', 1)->get();
+		try {
+			$orders = Order::whereIn('id', $orders)->where('status_id', 1)->get();
 
-            foreach ($orders as $order) {
-                foreach ($technicians as $techId) {
-                    OrderTechnician::updateOrCreate([
-                        'order_id'      => $order->id,
-                        'technician_id' => $techId,
-                    ]);
-                    $updated_technicians[] = $techId;
-                }
-                OrderTechnician::where('order_id', $order->id)
-                    ->whereNotIn('technician_id', $updated_technicians)
-                    ->delete();
-            }
+			foreach ($orders as $order) {
+				foreach ($technicians as $techId) {
+					OrderTechnician::updateOrCreate([
+						'order_id' => $order->id,
+						'technician_id' => $techId,
+					]);
+					$updated_technicians[] = $techId;
+				}
+				OrderTechnician::where('order_id', $order->id)
+					->whereNotIn('technician_id', $updated_technicians)
+					->delete();
+			}
 
-            return response()->json(['success' => 'Técnicos asignados correctamente'], 200);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Error al asignar técnicos: ' . $e->getMessage()], 500);
-        }
-    }
+			return response()->json(['success' => 'Técnicos asignados correctamente'], 200);
+		} catch (\Exception $e) {
+			return response()->json(['error' => 'Error al asignar técnicos: ' . $e->getMessage()], 500);
+		}
+	}
 }
