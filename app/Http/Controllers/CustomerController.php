@@ -447,15 +447,7 @@ class CustomerController extends Controller
             '3' => 'Clientes Potenciales',
         ];
 
-        $navigation = [
-            'Agenda' => route('crm.agenda'),
-            'Clientes' => route('customer.index'),
-            'Sedes' => route('customer.index.sedes'),
-            'Clientes potenciales' => route('customer.index.leads'),
-            'Ordenes de servicio' => route('order.index'),
-            'Estadisticas' => route('crm.chart.dashboard'),
-            //'Facturacion'          => route('invoices.index'),
-        ];
+        $navigation = $this->navigation;
 
         // Filtrar categorías basado en permisos
         if (!tenant_can('show_sedes')) {
@@ -480,45 +472,6 @@ class CustomerController extends Controller
         //     'Facturacion' => route('invoices.index')
         // ];
 
-        $navigationItems = [
-            'Agenda' => [
-                'route' => route('crm.agenda'),
-                'permission' => 'handle_planning'
-            ],
-            'Clientes' => [
-                'route' => route('customer.index'),
-                'permission' => null
-            ],
-            'Sedes' => [
-                'route' => route('customer.index.sedes'),
-                'permission' => 'show_sedes'
-            ],
-            'Clientes potenciales' => [
-                'route' => route('customer.index.leads'),
-                'permission' => null
-            ],
-            'Ordenes de servicio' => [
-                'route' => route('order.index'),
-                'permission' => null
-            ],
-            'Estadisticas' => [
-                'route' => route('crm.chart.dashboard'),
-                'permission' => null
-            ],
-            /*'Facturacion' => [
-                'route' => route('invoices.index'),
-                'permission' => 'handle_invoice'
-            ]*/
-        ];
-
-        $navigation = [];
-
-        foreach ($navigationItems as $label => $item) {
-            if ($item['permission'] === null || tenant_can($item['permission'])) {
-                $navigation[$label] = $item['route'];
-            }
-        }
-
         return view('customer.index.simple', compact('customers', 'service_types', 'categories', 'navigation'));
     }
 
@@ -533,15 +486,7 @@ class CustomerController extends Controller
             '3' => 'Clientes Potenciales',
         ];
 
-        $navigation = [
-            'Agenda' => route('crm.agenda'),
-            'Clientes' => route('customer.index'),
-            'Sedes' => route('customer.index.sedes'),
-            'Clientes potenciales' => route('customer.index.leads'),
-            'Ordenes de servicio' => route('order.index'),
-            'Estadisticas' => route('crm.chart.dashboard'),
-            //'Facturacion'          => route('invoices.index'),
-        ];
+        $navigation = $this->navigation;
 
         return view('customer.index.sedes', compact('customers', 'service_types', 'categories', 'navigation'));
     }
@@ -557,15 +502,7 @@ class CustomerController extends Controller
             '3' => 'Clientes Potenciales',
         ];
 
-        $navigation = [
-            'Agenda' => route('crm.agenda'),
-            'Clientes' => route('customer.index'),
-            'Sedes' => route('customer.index.sedes'),
-            'Clientes potenciales' => route('customer.index.leads'),
-            'Ordenes de servicio' => route('order.index'),
-            'Estadisticas' => route('crm.chart.dashboard'),
-            //'Facturacion'          => route('invoices.index'),
-        ];
+        $navigation = $this->navigation;
 
         return view('customer.index.leads', compact('customers', 'service_types', 'navigation', 'categories'));
     }
@@ -935,11 +872,20 @@ class CustomerController extends Controller
 
         $navigation = $customer->service_type_id == 1 ?
             [
-                'Cliente' => route('customer.edit', ['id' => $customer->id]),
+                'Cliente' => [
+                    'route' => route('customer.edit', ['id' => $customer->id]),
+                    'permission' => null
+                ],
             ] :
             [
-                'Cliente' => route('customer.edit', ['id' => $customer->id]),
-                'Sedes' => route('customer.show.sede', ['matrix' => $customer->id]),
+                'Cliente' => [
+                    'route' => route('customer.edit', ['id' => $customer->id]),
+                    'permission' => null
+                ],
+                'Sedes' => [
+                    'route' => route('customer.show.sede', ['matrix' => $customer->id]),
+                    'permission' => null
+                ],
             ];
 
         return view('customer.show.sede', compact('customer', 'sedes', 'navigation', 'service_types'));
@@ -951,13 +897,34 @@ class CustomerController extends Controller
         $customer = Customer::find($id);
         $service_types = ServiceType::all();
         $navigation = [
-            'Sede' => route('customer.edit.sede', ['id' => $customer->id]),
-            'Archivos' => route('customer.show.sede.files', ['id' => $customer->id]),
-            'Planos' => route('customer.show.sede.floorplans', ['id' => $customer->id]),
-            'Portal' => route('customer.show.sede.portal', ['id' => $customer->id]),
-            'Áreas de aplicación' => route('customer.show.sede.areas', ['id' => $customer->id]),
-            //'Seguimientos' => route('customer.show.sede.trackings', ['id' => $customer->id]),
-            'Cotizaciones' => route('customer.quote', ['id' => $customer->id, 'class' => 'customer']),
+            'Sede' => [
+                'route' => route('customer.edit.sede', ['id' => $customer->id]),
+                'permission' => null
+            ],
+            'Archivos' => [
+                'route' => route('customer.show.sede.files', ['id' => $customer->id]),
+                'permission' => null
+            ],
+            'Planos' => [
+                'route' => route('customer.show.sede.floorplans', ['id' => $customer->id]),
+                'permission' => null
+            ],
+            'Portal' => [
+                'route' => route('customer.show.sede.portal', ['id' => $customer->id]),
+                'permission' => null
+            ],
+            'Áreas de aplicación' => [
+                'route' => route('customer.show.sede.areas', ['id' => $customer->id]),
+                'permission' => null
+            ],
+            //'Seguimientos' => [
+            //    'route' => route('customer.show.sede.trackings', ['id' => $customer->id]),
+            //    'permission' => null
+            //],
+            'Cotizaciones' => [
+                'route' => route('customer.quote', ['id' => $customer->id, 'class' => 'customer']),
+                'permission' => null
+            ],
         ];
         return view('customer.show.files', compact('customer', 'filenames', 'navigation', 'service_types'));
     }
@@ -968,13 +935,34 @@ class CustomerController extends Controller
         $service_types = ServiceType::all();
         $services = Service::orderBy('name')->get();
         $navigation = [
-            'Sede' => route('customer.edit.sede', ['id' => $customer->id]),
-            'Archivos' => route('customer.show.sede.files', ['id' => $customer->id]),
-            'Planos' => route('customer.show.sede.floorplans', ['id' => $customer->id]),
-            'Portal' => route('customer.show.sede.portal', ['id' => $customer->id]),
-            'Áreas de aplicación' => route('customer.show.sede.areas', ['id' => $customer->id]),
-            //'Seguimientos' => route('customer.show.sede.trackings', ['id' => $customer->id]),
-            'Cotizaciones' => route('customer.quote', ['id' => $customer->id, 'class' => 'customer']),
+            'Sede' => [
+                'route' => route('customer.edit.sede', ['id' => $customer->id]),
+                'permission' => null
+            ],
+            'Archivos' => [
+                'route' => route('customer.show.sede.files', ['id' => $customer->id]),
+                'permission' => null
+            ],
+            'Planos' => [
+                'route' => route('customer.show.sede.floorplans', ['id' => $customer->id]),
+                'permission' => null
+            ],
+            'Portal' => [
+                'route' => route('customer.show.sede.portal', ['id' => $customer->id]),
+                'permission' => null
+            ],
+            'Áreas de aplicación' => [
+                'route' => route('customer.show.sede.areas', ['id' => $customer->id]),
+                'permission' => null
+            ],
+            //'Seguimientos' => [
+            //    'route' => route('customer.show.sede.trackings', ['id' => $customer->id]),
+            //    'permission' => null
+            //],
+            'Cotizaciones' => [
+                'route' => route('customer.quote', ['id' => $customer->id, 'class' => 'customer']),
+                'permission' => null
+            ],
         ];
         return view('customer.show.floorplans', compact('customer', 'navigation', 'service_types', 'services'));
     }
@@ -989,13 +977,34 @@ class CustomerController extends Controller
             ->get();
 
         $navigation = [
-            'Sede' => route('customer.edit.sede', ['id' => $customer->id]),
-            'Archivos' => route('customer.show.sede.files', ['id' => $customer->id]),
-            'Planos' => route('customer.show.sede.floorplans', ['id' => $customer->id]),
-            'Portal' => route('customer.show.sede.portal', ['id' => $customer->id]),
-            'Áreas de aplicación' => route('customer.show.sede.areas', ['id' => $customer->id]),
-            //'Seguimientos' => route('customer.show.sede.trackings', ['id' => $customer->id]),
-            'Cotizaciones' => route('customer.quote', ['id' => $customer->id, 'class' => 'customer']),
+            'Sede' => [
+                'route' => route('customer.edit.sede', ['id' => $customer->id]),
+                'permission' => null
+            ],
+            'Archivos' => [
+                'route' => route('customer.show.sede.files', ['id' => $customer->id]),
+                'permission' => null
+            ],
+            'Planos' => [
+                'route' => route('customer.show.sede.floorplans', ['id' => $customer->id]),
+                'permission' => null
+            ],
+            'Portal' => [
+                'route' => route('customer.show.sede.portal', ['id' => $customer->id]),
+                'permission' => null
+            ],
+            'Áreas de aplicación' => [
+                'route' => route('customer.show.sede.areas', ['id' => $customer->id]),
+                'permission' => null
+            ],
+            //'Seguimientos' => [
+            //    'route' => route('customer.show.sede.trackings', ['id' => $customer->id]),
+            //    'permission' => null
+            //],
+            'Cotizaciones' => [
+                'route' => route('customer.quote', ['id' => $customer->id, 'class' => 'customer']),
+                'permission' => null
+            ],
         ];
         return view('customer.show.portal', compact('customer', 'navigation', 'service_types', 'services', 'access'));
     }
@@ -1005,13 +1014,34 @@ class CustomerController extends Controller
         $customer = Customer::find($id);
         $service_types = ServiceType::all();
         $navigation = [
-            'Sede' => route('customer.edit.sede', ['id' => $customer->id]),
-            'Archivos' => route('customer.show.sede.files', ['id' => $customer->id]),
-            'Planos' => route('customer.show.sede.floorplans', ['id' => $customer->id]),
-            'Portal' => route('customer.show.sede.portal', ['id' => $customer->id]),
-            'Áreas de aplicación' => route('customer.show.sede.areas', ['id' => $customer->id]),
-            //'Seguimientos' => route('customer.show.sede.trackings', ['id' => $customer->id]),
-            'Cotizaciones' => route('customer.quote', ['id' => $customer->id, 'class' => 'customer']),
+            'Sede' => [
+                'route' => route('customer.edit.sede', ['id' => $customer->id]),
+                'permission' => null
+            ],
+            'Archivos' => [
+                'route' => route('customer.show.sede.files', ['id' => $customer->id]),
+                'permission' => null
+            ],
+            'Planos' => [
+                'route' => route('customer.show.sede.floorplans', ['id' => $customer->id]),
+                'permission' => null
+            ],
+            'Portal' => [
+                'route' => route('customer.show.sede.portal', ['id' => $customer->id]),
+                'permission' => null
+            ],
+            'Áreas de aplicación' => [
+                'route' => route('customer.show.sede.areas', ['id' => $customer->id]),
+                'permission' => null
+            ],
+            //'Seguimientos' => [
+            //    'route' => route('customer.show.sede.trackings', ['id' => $customer->id]),
+            //    'permission' => null
+            //],
+            'Cotizaciones' => [
+                'route' => route('customer.quote', ['id' => $customer->id, 'class' => 'customer']),
+                'permission' => null
+            ],
         ];
         return view('customer.show.areas', compact('customer', 'zone_types', 'navigation', 'service_types'));
     }
@@ -1033,11 +1063,20 @@ class CustomerController extends Controller
 
         $navigation = $customer->service_type_id == 1 ?
             [
-                'Cliente' => route('customer.edit', ['id' => $customer->id]),
+                'Cliente' => [
+                    'route' => route('customer.edit', ['id' => $customer->id]),
+                    'permission' => null
+                ],
             ] :
             [
-                'Cliente' => route('customer.edit', ['id' => $customer->id]),
-                'Sedes' => route('customer.show.sede', ['matrix' => $customer->id]),
+                'Cliente' => [
+                    'route' => route('customer.edit', ['id' => $customer->id]),
+                    'permission' => null
+                ],
+                'Sedes' => [
+                    'route' => route('customer.show.sede', ['matrix' => $customer->id]),
+                    'permission' => null
+                ],
             ];
 
         if (!tenant_can('show_sedes')) {
@@ -1078,13 +1117,34 @@ class CustomerController extends Controller
         $customer = Customer::find($id);
 
         $navigation = [
-            'Sede' => route('customer.edit.sede', ['id' => $customer->id]),
-            'Archivos' => route('customer.show.sede.files', ['id' => $customer->id]),
-            'Planos' => route('customer.show.sede.floorplans', ['id' => $customer->id]),
-            'Portal' => route('customer.show.sede.portal', ['id' => $customer->id]),
-            'Áreas de aplicación' => route('customer.show.sede.areas', ['id' => $customer->id]),
-            //'Seguimientos' => route('customer.show.sede.trackings', ['id' => $customer->id]),
-            'Cotizaciones' => route('customer.quote', ['id' => $customer->id, 'class' => 'customer']),
+            'Sede' => [
+                'route' => route('customer.edit.sede', ['id' => $customer->id]),
+                'permission' => null
+            ],
+            'Archivos' => [
+                'route' => route('customer.show.sede.files', ['id' => $customer->id]),
+                'permission' => null
+            ],
+            'Planos' => [
+                'route' => route('customer.show.sede.floorplans', ['id' => $customer->id]),
+                'permission' => null
+            ],
+            'Portal' => [
+                'route' => route('customer.show.sede.portal', ['id' => $customer->id]),
+                'permission' => null
+            ],
+            'Áreas de aplicación' => [
+                'route' => route('customer.show.sede.areas', ['id' => $customer->id]),
+                'permission' => null
+            ],
+            //'Seguimientos' => [
+            //    'route' => route('customer.show.sede.trackings', ['id' => $customer->id]),
+            //    'permission' => null
+            //],
+            'Cotizaciones' => [
+                'route' => route('customer.quote', ['id' => $customer->id, 'class' => 'customer']),
+                'permission' => null
+            ],
         ];
 
         return view(
@@ -1121,8 +1181,14 @@ class CustomerController extends Controller
         $lead = Lead::find($id);
 
         $navigation = [
-            'Cliente potencial' => route('customer.edit.lead', ['id' => $lead->id]),
-            'Cotizaciones' => route('customer.quote', ['id' => $lead->id, 'class' => 'lead']),
+            'Cliente potencial' => [
+                'route' => route('customer.edit.lead', ['id' => $lead->id]),
+                'permission' => null
+            ],
+            'Cotizaciones' => [
+                'route' => route('customer.quote', ['id' => $lead->id, 'class' => 'lead']),
+                'permission' => null
+            ],
         ];
 
         return view(
@@ -1227,15 +1293,7 @@ class CustomerController extends Controller
             '2' => 'Sedes',
             '3' => 'Clientes Potenciales',
         ];
-        $navigation = [
-            'Agenda' => route('crm.agenda'),
-            'Clientes' => route('customer.index'),
-            'Sedes' => route('customer.index.sedes'),
-            'Clientes potenciales' => route('customer.index.leads'),
-            'Estadisticas' => route('crm.chart.dashboard'),
-            'Ordenes de servicio' => route('order.index'),
-            'Facturacion' => route('invoices.index'),
-        ];
+        $navigation = $this->navigation;
 
         return view($type == 1 ? 'customer.index.simple' : ($type == 2 ? 'customer.index.sedes' : 'customer.index.leads'), compact('customers', 'service_types', 'categories', 'navigation'));
     }
