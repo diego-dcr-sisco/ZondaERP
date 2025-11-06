@@ -89,3 +89,15 @@ if (!function_exists('tenant_denied')) {
         return auth()->user()->getDeniedPermissionsByTenant();
     }
 }
+
+if (!function_exists('tenant_can_any')) {
+    function tenant_can_any(array $permissions): bool
+    {
+        foreach ($permissions as $permission) {
+            if (tenant_can($permission)) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
