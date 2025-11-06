@@ -85,6 +85,8 @@ class OrderController extends Controller
 		$customer_ranges = Customer::where('general_sedes', '!=', 0)->orWhere('service_type_id', 1)->orderBy('name', 'asc')->get();
 		$navigation = $this->navigation;
 
+		dd(auth()->user());
+
 		return view(
 			'order.index',
 			compact(
