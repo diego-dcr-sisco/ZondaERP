@@ -118,6 +118,7 @@ class OrderController extends Controller
 		session()->put('prev_url', $prevUrl);
 
 		$navigation = $this->navigation;
+		dd($navigation);
 
 		return view(
 			'order.create',
