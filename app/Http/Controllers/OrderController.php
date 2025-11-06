@@ -85,8 +85,6 @@ class OrderController extends Controller
 		$customer_ranges = Customer::where('general_sedes', '!=', 0)->orWhere('service_type_id', 1)->orderBy('name', 'asc')->get();
 		$navigation = $this->navigation;
 
-		dd(auth()->user()->tenant->plan_id);
-
 		return view(
 			'order.index',
 			compact(
@@ -378,25 +376,31 @@ class OrderController extends Controller
 			]);
 		}
 
-		// Consulta para sedes (manteniendo condiciones originales)
-		$sedesQuery = Customer::where('service_type_id', '!=', 1)
-			->where('general_sedes', '!=', 0)
-			->when($name, fn($q) => $q->where('name', 'like', "%$name%"))
-			->when($phone, fn($q) => $q->where('phone', 'like', "%$phone%"))
-			->when($address, fn($q) => $q->where('address', 'like', "%$address%"));
+		if (auth()->user()->tenant->plan_id != 1) {
+			// Consulta para sedes (manteniendo condiciones originales)
+			$sedesQuery = Customer::where('service_type_id', '!=', 1)
+				->where('general_sedes', '!=', 0)
+				->when($name, fn($q) => $q->where('name', 'like', "%$name%"))
+				->when($phone, fn($q) => $q->where('phone', 'like', "%$phone%"))
+				->when($address, fn($q) => $q->where('address', 'like', "%$address%"));
 
-		// Consulta para clientes principales (manteniendo condiciones originales)
-		$customersQuery = Customer::where('status', '!=', 0)
-			//->where('service_type_id', 1)
-			->when($name, fn($q) => $q->where('name', 'like', "%$name%"))
-			->when($phone, fn($q) => $q->where('phone', 'like', "%$phone%"))
-			->when($address, fn($q) => $q->where('address', 'like', "%$address%"));
+			// Consulta para clientes principales (manteniendo condiciones originales)
+			$customersQuery = Customer::where('status', '!=', 0)
+				//->where('service_type_id', 1)
+				->when($name, fn($q) => $q->where('name', 'like', "%$name%"))
+				->when($phone, fn($q) => $q->where('phone', 'like', "%$phone%"))
+				->when($address, fn($q) => $q->where('address', 'like', "%$address%"));
 
-
-
-
-		$results = $customersQuery->get()->merge($sedesQuery->get());
-
+			$results = $customersQuery->get()->merge($sedesQuery->get());
+		} else {
+			$customersQuery = Customer::where('status', '!=', 0)
+				//->where('service_type_id', 1)
+				->when($name, fn($q) => $q->where('name', 'like', "%$name%"))
+				->when($phone, fn($q) => $q->where('phone', 'like', "%$phone%"))
+				->when($address, fn($q) => $q->where('address', 'like', "%$address%"));
+			
+			$results = $customersQuery->get();
+		}
 
 		return response()->json([
 			'customers' => $results->map(function ($customer) {
