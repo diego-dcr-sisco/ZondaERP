@@ -27,7 +27,7 @@ class ClientController extends Controller
     private $mip_path = 'mip_directory/';
     private $reports_path = 'backups/reports/';
     private $dir_names = [];
-    private $disk_type = 'public'; // Cambiar a 'google' o 'public' según necesites
+    private $disk_type = 'google'; // Cambiar a 'google' o 'public' según necesites
 
     private $navigation;
 

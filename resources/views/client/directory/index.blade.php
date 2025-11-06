@@ -50,10 +50,10 @@
                             <i class="bi bi-folder-fill"></i> Crear carpeta
                         </button>
 
-                        <!--a href="{{ route('client.directory.mip', ['path' => $data['root_path']]) }}" class="btn btn-dark btn-sm"
+                       {{-- <!--a href="{{ route('client.directory.mip', ['path' => $data['root_path']]) }}" class="btn btn-dark btn-sm"
                             onclick="return confirm('{{ __('messages.do_you_want_create_mip') }}')">
                             <i class="bi bi-bar-chart-steps"></i> {{ __('buttons.mip_structure') }}
-                        </a-->
+                        </a--> --}}
 
                         <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#fileModal">
                             <i class="bi bi-file-earmark-arrow-up-fill"></i> {{ __('buttons.upload_files') }}
