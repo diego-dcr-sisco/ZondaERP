@@ -151,13 +151,6 @@ class UserController extends Controller
 		$local_dirs = $disk->directories($this->path);
 		sort($local_dirs);
 
-		/*if (auth()->user()->isSuperAdmin()) {
-			$navigation = [
-				'Usuario interno' => route('user.create'),
-				'Cliente' => route('user.create.client')
-			];
-		}*/
-
 		if (auth()->user()->isSuperAdmin()) {
 			$navigation = [
 				'Usuario interno' => [

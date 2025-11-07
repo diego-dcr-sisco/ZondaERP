@@ -1059,6 +1059,12 @@ class CustomerController extends Controller
         $states = json_decode(file_get_contents(public_path($this->states_route)), true);
         $cities = json_decode(file_get_contents(public_path($this->cities_route)), true);
 
+        if (!tenant_can('show_sedes')) {
+            $service_types = $service_types->filter(function ($service) {
+                return $service->name !== 'Industrial/Planta';
+            });
+        }
+
         $customer = Customer::find($id);
 
         $navigation = $customer->service_type_id == 1 ?

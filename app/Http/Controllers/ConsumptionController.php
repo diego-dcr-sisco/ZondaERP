@@ -32,17 +32,50 @@ class ConsumptionController extends Controller
     private $size = 50; // Paginación
 
     public $navigation = [
-        'Almacenes' => '/stock',
-        'Lotes' => '/lot/index',
-        'Productos' => '/products',
-        'Movimientos' => '/stock/movements',
-        'Consumos en ordenes' => '/stock/movements/orders',
-        'Consumos' => '/consumptions/',
-        // 'Zonas' => '/customer-zones',
-        // 'Pedidos' => '/consumptions',
-        // 'Productos en ordenes' => '/stock/orders-products',
-        //'Estadisticas' => '/stock/analytics',
-        // 'Compras' => '/purchase-requisition/purchases',
+        'Almacenes' => [
+            'route' => '/stock',
+            'permission' => null
+        ],
+        'Lotes' => [
+            'route' => '/lot/index',
+            'permission' => null
+        ],
+        'Productos' => [
+            'route' => '/products',
+            'permission' => null
+        ],
+        'Movimientos' => [
+            'route' => '/stock/movements',
+            'permission' => null
+        ],
+        'Consumos en ordenes' => [
+            'route' => '/stock/movements/orders',
+            'permission' => null
+        ],
+        'Consumos' => [
+            'route' => '/consumptions',
+            'permission' => null
+        ],
+        /*'Zonas' => [
+            'route' => '/customer-zones',
+            'permission' => null
+        ],
+        'Pedidos' => [
+            'route' => '/consumptions',
+            'permission' => null
+        ],
+        'Productos en ordenes' => [
+            'route' => '/stock/orders-products',
+            'permission' => null
+        ],
+        'Estadisticas' => [
+            'route' => '/stock/analytics',
+            'permission' => null
+        ],
+        'Compras' => [
+            'route' => '/purchase-requisition/purchases',
+            'permission' => null
+        ]*/
     ];
 
     public function preIndex()

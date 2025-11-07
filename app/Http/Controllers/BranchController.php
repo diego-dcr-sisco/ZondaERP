@@ -63,8 +63,14 @@ class BranchController extends Controller {
         $cities = json_decode(file_get_contents(public_path($this->cities_route)), true);
 
         $navigation = [
-            'Sucursal' => route('branch.edit', ['id' => $branch->id]),
-            'Contacto' => route('branch.edit.contact', ['id' => $branch->id])
+            'Sucursal' => [
+                'route' => route('branch.edit', ['id' => $branch->id]),
+                'permission' => null,
+            ],
+            'Contacto' => [
+                'route' => route('branch.edit.contact', ['id' => $branch->id]),
+                'permission' => null,
+            ]
         ];
         return view('branch.edit.form', compact('branch', 'states', 'cities', 'status', 'navigation'));
     }
@@ -74,8 +80,14 @@ class BranchController extends Controller {
         $branch = Branch::find($id);        
 
         $navigation = [
-            'Sucursal' => route('branch.edit', ['id' => $branch->id]),
-            'Contacto' => route('branch.edit.contact', ['id' => $branch->id])
+            'Sucursal' => [
+                'route' => route('branch.edit', ['id' => $branch->id]),
+                'permission' => null,
+            ],
+            'Contacto' => [
+                'route' => route('branch.edit.contact', ['id' => $branch->id]),
+                'permission' => null,
+            ]
         ];
         return view('branch.edit.contact', compact('branch', 'navigation'));
     }

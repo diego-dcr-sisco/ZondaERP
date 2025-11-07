@@ -196,8 +196,14 @@ class ClientController extends Controller
     public function directories(string $path)
     {
         $navigation = [
-            'Carpetas' => route('client.system.index', ['path' => $this->path]),
-            'Reportes' => route('client.reports')
+            'Carpetas' => [
+                'route' => route('client.system.index', ['path' => $this->path]),
+                'permission' => null
+            ],
+            'Reportes' => [
+                'route' => route('client.reports'),
+                'permission' => null
+            ]
         ];
 
         $mip_dirs = $mip_files = [];
@@ -808,10 +814,16 @@ class ClientController extends Controller
     // Funciones para los filtros de reportes 
     public function reports(Request $request)
     {
-        //dd($request->all());
+        
         $navigation = [
-            'Carpetas' => route('client.system.index', ['path' => $this->path]),
-            'Reportes' => route('client.reports')
+            'Carpetas' => [
+                'route' => route('client.system.index', ['path' => $this->path]),
+                'permission' => null
+            ],
+            'Reportes' => [
+                'route' => route('client.reports'),
+                'permission' => null
+            ]
         ];
 
         $user = User::find(auth()->user()->id);
