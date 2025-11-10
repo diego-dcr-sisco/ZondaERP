@@ -26,7 +26,7 @@ use App\Models\OrderInsidences;
 use App\Models\Branch;
 use App\Models\OrderName;
 
-
+use Illuminate\Support\Str;
 use Carbon\Carbon;
 
 use SimpleSoftwareIO\QrCode\Facades\QrCode as QrCode;
@@ -55,6 +55,29 @@ class FloorPlansController extends Controller
             }
         }
         return array_values($result);
+    }
+
+    private function getNavigation(FloorPlans $floorplan)
+    {
+        $navigation = [
+            'Plano' => [
+                'route' => route('floorplan.edit', ['id' => $floorplan->id]),
+                'permission' => null
+            ],
+            'Dispositivos' => [
+                'route' => route('floorplan.devices', ['id' => $floorplan->id, 'version' => $floorplan->lastVersion() ?? '0']),
+                'permission' => null
+            ],
+            'QRs' => [
+                'route' => route('floorplan.qr', ['id' => $floorplan->id]),
+                'permission' => null
+            ],
+            'Áreas de aplicación' => [
+                'route' => route('customer.show.sede.areas', ['id' => $floorplan->customer_id]),
+                'permission' => null
+            ],
+        ];
+        return $navigation;
     }
 
 
@@ -102,7 +125,7 @@ class FloorPlansController extends Controller
             $status = false; //false;
         }
 
-        return view ('customer.show', compact('status', 'floorplans', 'client', 'error', 'success', 'warning'));
+        return view('customer.show', compact('status', 'floorplans', 'client', 'error', 'success', 'warning'));
     }
 
     public function process(string $id)
@@ -193,11 +216,7 @@ class FloorPlansController extends Controller
             return back();
         }
 
-        $navigation = [
-            'Plano' => route('floorplan.edit', ['id' => $floorplan->id]),
-            'Dispositivos' => route('floorplan.devices', ['id' => $floorplan->id, 'version' => $floorplan->lastVersion()]),
-            'QRs' => route('floorplan.qr', ['id' => $floorplan->id]),
-        ];
+        $navigation = $this->getNavigation($floorplan);
 
         return view('floorplans.print', compact('floorplan', 'devices', 'print_data', 'img_sizes', 'navigation'))->with(['last_updated_version' => $last_version]);
     }
@@ -207,50 +226,48 @@ class FloorPlansController extends Controller
         $data = $request->all();
 
         try {
-            $floorplan = FloorPlans::findOrFail($data['floorplan_id']);
+            $jsonData = $request->input('pdf_json_data');
+            $data = json_decode($jsonData, true);
+            $legend_data = [];
+            $groupedPoints = $data['groupedPoints'];
 
-            // Decodificar y guardar imagen
-            $imageData = $data['img_base64'];
-            $imageData = str_replace('data:image/png;base64,', '', $imageData);
-            $imageData = str_replace(' ', '+', $imageData);
-            $imageBinary = base64_decode($imageData);
+            foreach ($groupedPoints as $gp) {
+                $c_point = ControlPoint::find($gp['type_control_point_id']);
 
-            // Guardar imagen en storage
-            $imageName = 'print_' . $floorplan->id . '_' . $data['version'] . '_' . time() . '.png';
-            $imagePath = 'prints/' . $imageName;
-            Storage::disk('public')->put($imagePath, $imageBinary);
+                $legend_data[] = [
+                    'label' => $c_point->name . ' (' . $c_point->code . ') - Puntos totales: ' . $gp['count'] . ' - Rango(s): ' . implode(', ', $gp['nplans']),
+                    'color' => $gp['color']
+                ];
+            }
 
-            // Obtener ruta física para el PDF
-            //$physicalImagePath = Storage::disk('public')->path($imagePath);
-            $physicalImagePath = storage_path('app/public/' . $imagePath);
-
-            // Datos para el PDF
             $pdfData = [
-                'floorplan_id' => $floorplan->id,
-                'floorplan_name' => $floorplan->filename,
-                'version' => $data['version'],
-                'image_path' => $physicalImagePath, // Ruta física, no URL
-                'print_date' => now()->format('d/m/Y H:i:s'),
-                'legend' => $this->getPrintLegend($floorplan->id, $data['version'])
+                "imageBase64" => $data['image'],
+                "customer" => $data['customer'],
+                "filename" => $data['filename'],
+                'service' => $data['service'],
+                "date_version" => $data['date_version'],
+                "device_count" => $data['device_count'],
+                "font_family" => $data['font_family'] ?? "Arial",
+                "font_color" => $data['font_color'] ?? "#000000",
+                "legend" => $legend_data
             ];
 
-            // Generar PDF
-            $pdf = PDF::loadView('floorplans.print', $pdfData)
-                ->setPaper('a4', 'landscape');
+            // Generar el PDF en landscape
+            $pdf = Pdf::loadView('floorplans.pdf.file', $pdfData)
+                ->setPaper('a4', 'landscape')
+                ->setOptions([
+                    'isHtml5ParserEnabled' => true,
+                    'isRemoteEnabled' => true,
+                    //'dpi' => 150,
+                    'defaultFont' => $data['font_family'] ?? 'Arial'
+                ]);
 
+            // Crear nombre de archivo seguro
+            $fileName = Str::slug($data['filename'] ?? 'plano') .
+                Str::slug($data['customer'] ?? 'cliente') . '_' .
+                date('Y-m-d_H-i') . '.pdf';
 
-            $pdfPath = 'prints/plano_' . $floorplan->id . '_' . $data['version'] . '.pdf';
-            Storage::disk('public')->put($pdfPath, $pdf->output());
-
-            // Limpiar archivos temporales
-            Storage::disk('public')->delete($imagePath);
-
-            return response()->json([
-                'success' => true,
-                'pdf_url' => asset('storage/' . $pdfPath),
-                'message' => 'PDF generado correctamente',
-                'data' => $pdfData
-            ]);
+            return $pdf->download($fileName);
 
         } catch (\Exception $e) {
             return response()->json([
@@ -325,11 +342,7 @@ class FloorPlansController extends Controller
         $floorplan = FloorPlans::findOrFail($id);
         $services = Service::orderBy('name', 'asc')->get();
 
-        $navigation = [
-            'Plano' => route('floorplan.edit', ['id' => $floorplan->id]),
-            'Dispositivos' => route('floorplan.devices', ['id' => $floorplan->id, 'version' => $floorplan->lastVersion() ?? 1]),
-            'QRs' => route('floorplan.qr', ['id' => $floorplan->id]),
-        ];
+        $navigation = $this->getNavigation($floorplan);
 
         return view('floorplans.edit.form', compact('floorplan', 'services', 'navigation'));
     }
@@ -386,6 +399,18 @@ class FloorPlansController extends Controller
             $img_sizes = [$image->width(), $image->height()];
 
             $legend = $this->getPrintLegend($floorplan->id, $version);
+
+            //$last_version = session('last_updated_version') ?? $floorplan->lastVersion();
+            $f_version = FloorplanVersion::where('floorplan_id', $floorplan->id)->where('version', $version)->first();
+            $print_data = [
+                'name' => $floorplan->filename,
+                'floorplan_version' => $floorplan->versions()->latest('version')->value('version'),
+                'date_version' => $f_version ? Carbon::parse($f_version->updated_at)->format('Y-m-d') : '',
+                'customer' => $floorplan->customer->name,
+                'service' => $floorplan->service->name,
+                'count' => $devices->count(),
+                'legend' => $legend
+            ];
         }
 
         $logoPath = public_path('images/logo.png');
@@ -396,11 +421,8 @@ class FloorPlansController extends Controller
             $logoBase64 = 'data:image/png;base64,' . base64_encode($logoData);
         }
 
-        $navigation = [
-            'Plano' => route('floorplan.edit', ['id' => $floorplan->id]),
-            'Dispositivos' => route('floorplan.devices', ['id' => $floorplan->id, 'version' => $floorplan->lastVersion() ?? 1]),
-            'QRs' => route('floorplan.qr', ['id' => $floorplan->id]),
-        ];
+        $navigation = $this->getNavigation($floorplan);
+
 
         $f_version = FloorplanVersion::where('floorplan_id', $id)->where('version', $version)->first();
 
@@ -421,6 +443,7 @@ class FloorPlansController extends Controller
             'f_version',
             'legend',
             'logoBase64',
+            'print_data'
         ));
     }
 
@@ -542,8 +565,6 @@ class FloorPlansController extends Controller
 
     public function searchQRs(Request $request, string $id)
     {
-
-        //dd($request->all());
         // Obtener parámetros de ordenamiento
         $size = $request->input('size');
         $direction = $request->input('direction', 'DESC');
@@ -576,17 +597,12 @@ class FloorPlansController extends Controller
 
         $control_points = ControlPoint::whereIn('id', $devices->pluck('type_control_point_id')->unique())->get();
         $application_areas = ApplicationArea::whereIn('id', $devices->pluck('application_area_id')->unique())->get();
-        //dd($types);
-        // Paginar resultados
+
         $devices = $query->paginate($size)
             ->appends($request->all());
 
 
-        $navigation = [
-            'Plano' => route('floorplan.edit', ['id' => $floorplan->id]),
-            'Dispositivos' => route('floorplan.devices', ['id' => $floorplan->id, 'version' => $floorplan->lastVersion()]),
-            'QRs' => route('floorplan.qr', ['id' => $floorplan->id]),
-        ];
+        $navigation = $this->getNavigation($floorplan);
 
         return view(
             'floorplans.selectqrs',
@@ -622,11 +638,17 @@ class FloorPlansController extends Controller
     public function updateDevices(Request $request, string $id)
     {
         $pointsData = json_decode($request->input('points'));
-        $version = $request->input('version');
         $create_version = $request->input('create_version');
         $floorplan = FloorPlans::find($id);
 
-        $latestVersionNumber = $create_version ? ($version != null ? ++$version : 1) : $version;
+        $version = FloorplanVersion::where('floorplan_id', $floorplan->id)->max('version');
+
+        if ($version) {
+            $latestVersionNumber = ++$version;
+        } else {
+            $latestVersionNumber = 1;
+        }
+
 
         if ($create_version) {
             FloorplanVersion::insert([
@@ -674,7 +696,7 @@ class FloorPlansController extends Controller
             $nplans[] = $point->count;
         }
 
-        return redirect()->route('floorplan.devices', ['id' => $floorplan->id, 'version' => $latestVersionNumber]); 
+        return redirect()->route('floorplan.devices', ['id' => $floorplan->id, 'version' => $latestVersionNumber]);
     }
 
     public function updateVersion(Request $request, string $id)
@@ -730,11 +752,7 @@ class FloorPlansController extends Controller
 
         //dd($floorplan->lastVersion());
 
-        $navigation = [
-            'Plano' => route('floorplan.edit', ['id' => $floorplan->id]),
-            'Dispositivos' => route('floorplan.devices', ['id' => $floorplan->id, 'version' => $floorplan->lastVersion() ?? 0]),
-            'QRs' => route('floorplan.qr', ['id' => $floorplan->id]),
-        ];
+        $navigation = $this->getNavigation($floorplan);
 
         return view('floorplans.selectqrs', compact('devices', 'floorplan', 'type', 'control_points', 'application_areas', 'navigation'));
     }

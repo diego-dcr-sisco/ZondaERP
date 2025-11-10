@@ -41,7 +41,7 @@
                     </div>
                     <div class="col-lg-3 col-12 mb-3">
                         <label for="phone" class="form-label is-required">{{ __('customer.data.phone') }}</label>
-                        <input type="text" min=1 class="form-control" id="phone" value="{{ $customer_matrix->phone }}  }}" placeholder="0000000000"
+                        <input type="text" min=1 class="form-control" id="phone" value="{{ $customer_matrix->phone }} " placeholder="0000000000"
                             maxlength="25" name="phone" autocomplete="off" required>
                     </div>
 
@@ -55,7 +55,7 @@
                         <select class="form-select " id="state" name="state" onchange="load_city()" required>
                             <option value="" selected>Selecciona un estado</option>
                             @foreach ($states as $state)
-                                <option value="{{ $state['key'] }}">{{ $state['name'] }}</option>
+                                <option value="{{ $state['key'] }}" {{ $customer_matrix->state == $state['key'] ? 'selected' : ''}}>{{ $state['name'] }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -71,7 +71,7 @@
                         <select type="text" class="form-select " id="service-type" name="service_type_id" required>
                             @foreach ($service_types as $service)
                                 <option value="{{ $service->id }}"
-                                    {{ !empty($customer) && $customer->service_type_id == $service->id ? 'selected' : '' }}>
+                                    {{ !empty($customer_matrix) && $customer_matrix->service_type_id == $service->id ? 'selected' : '' }}>
                                     {{ $service->name }}
                                 </option>
                             @endforeach
@@ -85,7 +85,7 @@
                             <option value="" selected>Sin Categoria</option>
                             @foreach ($categories as $category)
                                 <option value="{{ $category->id }}"
-                                    {{ !empty($customer) && $customer->company_category_id == $category->id ? 'selected' : '' }}>
+                                    {{ !empty($customer_matrix) && $customer_matrix->company_category_id == $category->id ? 'selected' : '' }}>
                                     {{ $category->category }}</option>
                             @endforeach
                         </select>
@@ -102,7 +102,7 @@
                         <label for="branch" class="form-label is-required">Método de contacto:</label>
                         <select type="text" class="form-select " name="contact_medium" id="contact-medium">
                             @foreach ($contact_medium as $key => $medium)
-                                <option value="{{ $key }}">{{ $medium }}</option>
+                                <option value="{{ $key }}" {{ $customer_matrix->contact_medium == $key ? 'selected' : '' }}>{{ $medium }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -126,7 +126,10 @@
         var states = @json($states);
         var cities = @json($cities);
 
-        $(document).ready(function() {});
+        $(document).ready(function() {
+            load_city();
+            $('#city').val('{{ $customer_matrix->city }}');
+        });
 
         function load_city() {
             var state = $("#state").val();

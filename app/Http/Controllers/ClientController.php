@@ -51,24 +51,15 @@ class ClientController extends Controller
         'Pago seguro'
     ];
 
-    public function __construct()
-    {
-        $this->navigation = [
-            'Carpetas' => [
-                'route' => route('client.system.index', ['path' => $this->path]),
-                'permission' => null
-            ],
-            'Reportes' => [
-                'route' => route('client.reports'),
-                'permission' => null
-            ]
-        ];
-    }
-
     // Método helper para obtener el disco configurado
     private function getDisk()
     {
         return Storage::disk($this->disk_type);
+    }
+
+    private function getAuthUserPath()
+    {
+        return auth()->user()->getTenantPath();
     }
 
     // Método para listar directorios (compatible con Flysystem v3)
@@ -202,14 +193,24 @@ class ClientController extends Controller
 
     public function index()
     {
-        $path = $this->path;
+        $path = $this->getAuthUserPath() . $this->path;
         $mip_path = $this->mip_path;
         return view('client.index', compact('path', 'mip_path'));
     }
 
     public function directories(string $path)
     {
-        $navigation = $this->navigation; 
+        $path = $this->getAuthUserPath() . $this->path;
+        $navigation = [
+            'Carpetas' => [
+                'route' => route('client.system.index', ['path' => $path]),
+                'permission' => null
+            ],
+            'Reportes' => [
+                'route' => route('client.reports'),
+                'permission' => null
+            ]
+        ];
 
         $mip_dirs = $mip_files = [];
         $disk = $this->getDisk();
@@ -819,7 +820,17 @@ class ClientController extends Controller
     // Funciones para los filtros de reportes 
     public function reports(Request $request)
     {
-        $navigation = $this->navigation;
+        $path = $this->getAuthUserPath() . $this->path;
+        $navigation = [
+            'Carpetas' => [
+                'route' => route('client.system.index', ['path' => $path]),
+                'permission' => null
+            ],
+            'Reportes' => [
+                'route' => route('client.reports'),
+                'permission' => null
+            ]
+        ];
 
         $user = User::find(auth()->user()->id);
         $business_lines = LineBusiness::all();

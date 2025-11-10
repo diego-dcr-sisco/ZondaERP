@@ -24,7 +24,7 @@
                         <div class="mb-3">
                             <label for="file" class="form-label">Subir nuevo plano:</label>
                             <input type="file" class="form-control" id="file" name="file"
-                                accept=".png, .jpg, .jpeg">
+                                 accept=".png, .jpg, .jpeg">
                             <div class="form-text">Formatos aceptados: .png, .jpg, .jpeg</div>
                         </div>
                         <div class="mb-3">

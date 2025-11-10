@@ -39,12 +39,13 @@
 
         @if (!$floorplan->service)
             <div class="alert alert-danger alert-dismissible fade show m-2" role="alert">
-                Por favor, selecciona un servicio para continuar con la configuración. NO se podra crear o actualizar la configuraion del plano
+                Por favor, selecciona un servicio para continuar con la configuración. NO se podra crear o actualizar la
+                configuraion del plano
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
             </div>
         @endif
 
-        <form class="form m-3" action="{{ route('floorplan.update.devices', ['id' => $floorplan->id]) }}" method="POST">
+        <div class="m-3">
             @csrf
             <div class="row">
                 <div class="col-6">
@@ -79,12 +80,12 @@
                         <div class="alert alert-warning alert-dismissible fade show mb-3" role="alert">
                             <i class="bi bi-exclamation-triangle-fill me-2"></i>
                             <strong>Importante:</strong> Antes de exportar, asegúrate de haber guardado todos los cambios
-                            realizados en el plano. La exportación se realizará sobre la última versión guardada.
+                            realizados en el plano. La exportación se realizará sobre la versión seleccionada.
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
 
                         <button type="button" class="btn btn-success btn-sm" onclick="captureCanvas()">
-                            <i class="bi bi-image"></i> Generar imagen del plano
+                            <i class="bi bi-image"></i> Generar archivo
                         </button>
 
                         <!-- Información adicional sobre la versión actual -->
@@ -101,26 +102,30 @@
                 </div>
             </div>
 
-            <div class="border rounded shadow p-3 mb-3">
-                <div class="fw-bold mb-2 fs-5">Generar dispositivos</div>
-                <div class="row">
-                    <div class="col-lg-6 col-12 mb-3">
-                        <label class="form-label">Versión seleccionada: </label>
-                        @if ($f_version)
-                            <div class="input-group">
-                                <input type="number" class="form-control" name="version" value="{{ $f_version?->version }}"
-                                    disabled>
-                                <input type="date" class="form-control" name="version_updated_at"
-                                    value="{{ $f_version?->updated_at->format('Y-m-d') }}">
-                            </div>
-                        @else
-                            <input type="text" class="form-control" value="Sin versión" disabled>
-                        @endif
-                    </div>
-                    <div class="col-lg-6 col-12 mb-3">
-                        <label class="form-label">Servicio: </label>
-                        <input type="text" class="form-control" value="{{ $floorplan->service->name ?? '' }}" disabled>
-                    </div>
+            <form action="{{ route('floorplan.update.devices', ['id' => $floorplan->id]) }}" method="POST"
+                enctype="multipart/form-data">
+                @csrf
+                <div class="border rounded shadow p-3 mb-3">
+                    <div class="fw-bold mb-2 fs-5">Generar dispositivos</div>
+                    <div class="row">
+                        <div class="col-lg-6 col-12 mb-3">
+                            <label class="form-label">Versión seleccionada: </label>
+                            @if ($f_version)
+                                <div class="input-group">
+                                    <input type="number" class="form-control" name="version"
+                                        value="{{ $f_version?->version }}" disabled>
+                                    <input type="date" class="form-control" name="version_updated_at"
+                                        value="{{ $f_version?->updated_at->format('Y-m-d') }}">
+                                </div>
+                            @else
+                                <input type="text" class="form-control" value="Sin versión" disabled>
+                            @endif
+                        </div>
+                        <div class="col-lg-6 col-12 mb-3">
+                            <label class="form-label">Servicio: </label>
+                            <input type="text" class="form-control" value="{{ $floorplan->service->name ?? '' }}"
+                                disabled>
+                        </div>
 
                         <div class="col-lg-4 col-12 mb-3">
                             <label" class="form-label">
@@ -146,37 +151,39 @@
                                 @endif
                         </div>
 
-                    <div class="col-lg-4 col-12 mb-3">
-                        <label class="form-label">Puntos de control
-                            asociados:
-                        </label>
-                        <select class="form-select " id="control-points" name="control_points">
-                            @foreach ($ctrlPoints as $point)
-                                @php
-                                    $pointNames[] = [
-                                        'id' => $point->id,
-                                        'name' => $point->name,
-                                    ];
-                                @endphp
-                                <option value="{{ $point->id }}">
-                                    {{ $point->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
+                        <div class="col-lg-4 col-12 mb-3">
+                            <label class="form-label">Puntos de control
+                                asociados:
+                            </label>
+                            <select class="form-select " id="control-points" name="control_points">
+                                @foreach ($ctrlPoints as $point)
+                                    @php
+                                        $pointNames[] = [
+                                            'id' => $point->id,
+                                            'name' => $point->name,
+                                        ];
+                                    @endphp
+                                    <option value="{{ $point->id }}">
+                                        {{ $point->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
 
-                    <div class="col-lg-4 col-12 mb-3">
-                        <label class="form-label">
-                            Rango:</label>
-                        <div class="input-group">
-                            <input class="form-control" id="min-range" type="number" placeholder="Mín" min="0" />
-                            <input class="form-control" id="max-range" type="number" placeholder="Máx" min="0" />
+                        <div class="col-lg-4 col-12 mb-3">
+                            <label class="form-label">
+                                Rango:</label>
+                            <div class="input-group">
+                                <input class="form-control" id="min-range" type="number" placeholder="Mín"
+                                    min="0" />
+                                <input class="form-control" id="max-range" type="number" placeholder="Máx"
+                                    min="0" />
+                            </div>
                         </div>
                     </div>
+                    <button type="button" class="btn btn-primary btn-sm" id="generate-points"
+                        onclick="generatePoints()">{{ __('buttons.generate') }}</button>
                 </div>
-                <button type="button" class="btn btn-primary btn-sm" id="generate-points"
-                    onclick="generatePoints()">{{ __('buttons.generate') }}</button>
-            </div>
 
                 <div class="border rounded shadow p-3 mb-3">
                     <div class="fw-bold mb-2 fs-5">Simbologia</div>
@@ -198,91 +205,92 @@
                     </div>
                 </div>
 
-            <div class="border rounded shadow p-3 mb-3">
-                <div class="fw-bold mb-2 fs-5">Layout (Plano) dinamico</div>
-                <div class="row">
-                    <div class="col-12">
-                        <div class="border border-dark rounded bg-secondary-subtle p-2 mb-3">
-                            <span class="fw-bold" id="count-points">Puntos generados: 0</span>
+                <div class="border rounded shadow p-3 mb-3">
+                    <div class="fw-bold mb-2 fs-5">Layout (Plano) dinamico</div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="border border-dark rounded bg-secondary-subtle p-2 mb-3">
+                                <span class="fw-bold" id="count-points">Puntos generados: 0</span>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="border rounded bg-secondary-subtle p-2 mb-3">
+                                <p class="fw-bold mb-1 fs-5 border">INSTRUCCIONES DE USO</p>
+                                <ul>
+                                    <li><strong>ZOOM</strong>: <strong>[+]</strong> para acercar, <strong>[-]</strong>
+                                        para
+                                        alejar.
+                                    </li>
+                                    <li><strong>MOVER PLANO</strong>: Pulsa la tecla <strong>Alt</strong>, haz click
+                                        sobre
+                                        el
+                                        plano
+                                        y
+                                        <strong>arrastra</strong>.
+                                    </li>
+                                    <li><strong>EDITAR PUNTO</strong>: Seleccionalo y pulsa la tecla <strong>E</strong>
+                                        o
+                                        <strong>e</strong>.
+                                    </li>
+                                    <li><strong>ELIMINAR PUNTO</strong>: Seleccionalo y pulsa la tecla
+                                        <strong>D</strong> o
+                                        <strong>d</strong>.
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="col-12">
-                        <div class="border rounded bg-secondary-subtle p-2 mb-3">
-                            <p class="fw-bold mb-1 fs-5 border">INSTRUCCIONES DE USO</p>
-                            <ul>
-                                <li><strong>ZOOM</strong>: <strong>[+]</strong> para acercar, <strong>[-]</strong>
-                                    para
-                                    alejar.
-                                </li>
-                                <li><strong>MOVER PLANO</strong>: Pulsa la tecla <strong>Alt</strong>, haz click
-                                    sobre
-                                    el
-                                    plano
-                                    y
-                                    <strong>arrastra</strong>.
-                                </li>
-                                <li><strong>EDITAR PUNTO</strong>: Seleccionalo y pulsa la tecla <strong>E</strong>
-                                    o
-                                    <strong>e</strong>.
-                                </li>
-                                <li><strong>ELIMINAR PUNTO</strong>: Seleccionalo y pulsa la tecla
-                                    <strong>D</strong> o
-                                    <strong>d</strong>.
-                                </li>
-                            </ul>
+                    <div class="mb-3 p-2 border rounded bg-secondary-subtle">
+                        <div class="form-check">
+                            <input class="form-check-input border-dark" type="checkbox" id="create-version"
+                                name="create_version" {{ count($floorplan->versions) > 0 ? '' : 'checked' }}>
+                            <label class="form-check-label fw-bold ms-1" for="create-version">
+                                Nueva versión
+                            </label>
+                        </div>
+                        <small class="d-block mt-1">Al marcar esta opción se generará una nueva revisión del
+                            plano</small>
+                    </div>
+                    <div class="row">
+                        <div class="col-auto mb-1">
+                            <div class="input-group input-group-sm">
+                                <button type="button" class="btn btn-success" id="zoomIn"><i
+                                        class="bi bi-plus-lg"></i></button>
+                                <span class="input-group-text">Zoom</span>
+                                <button type="button" class="btn btn-danger" id="zoomOut"><i
+                                        class="bi bi-dash-lg"></i></button>
+                            </div>
+                        </div>
+                        <div class="col-auto mb-1">
+                            <div class="input-group mb-3">
+                                <span class="input-group-text" id="point-label">Tamaño del punto</span>
+                                <select class="form-select" id="point-size" name="point_size">
+                                    <option value="6">Muy Pequeño (6px)</option>
+                                    <option value="8">Pequeño (8px)</option>
+                                    <option value="10">Normal (10px)</option>
+                                    <option value="12">Grande (12px)</option>
+                                    <option value="16">Muy Grande (16px)</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
+                    <div id="canvas-container" style="position: relative; overflow: auto;">
+                        <canvas class="border-1 border-dark rounded" id="myCanvas"></canvas>
+                    </div>
+                    <input type="hidden" id="points" name="points" value="">
                 </div>
 
-                <div class="mb-3 p-2 border rounded bg-secondary-subtle">
-                    <div class="form-check">
-                        <input class="form-check-input border-dark" type="checkbox" id="create-version"
-                            name="create_version" {{ count($floorplan->versions) > 0 ? '' : 'checked' }}>
-                        <label class="form-check-label fw-bold ms-1" for="create-version">
-                            Nueva versión
-                        </label>
-                    </div>
-                    <small class="d-block mt-1">Al marcar esta opción se generará una nueva revisión del
-                        plano</small>
-                </div>
-                <div class="row">
-                    <div class="col-auto mb-1">
-                        <div class="input-group input-group-sm">
-                            <button type="button" class="btn btn-success" id="zoomIn"><i
-                                    class="bi bi-plus-lg"></i></button>
-                            <span class="input-group-text">Zoom</span>
-                            <button type="button" class="btn btn-danger" id="zoomOut"><i
-                                    class="bi bi-dash-lg"></i></button>
-                        </div>
-                    </div>
-                    <div class="col-auto mb-1">
-                        <div class="input-group mb-3">
-                            <span class="input-group-text" id="point-label">Tamaño del punto</span>
-                            <select class="form-select" id="point-size" name="point_size">
-                                <option value="6">Muy Pequeño (6px)</option>
-                                <option value="8">Pequeño (8px)</option>
-                                <option value="10">Normal (10px)</option>
-                                <option value="12">Grande (12px)</option>
-                                <option value="16">Muy Grande (16px)</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <div id="canvas-container" style="position: relative; overflow: auto;">
-                    <canvas class="border-1 border-dark rounded" id="myCanvas"></canvas>
-                </div>
-                <input type="hidden" id="points" name="points" value="">
-            </div>
-
-            @if ($floorplan->service)
-                <button type="submit" class="btn btn-primary my-3 me-2" onclick="return submitForm();">
-                    {{ __('buttons.update') }}
-                </button>
-            @endif
+                @if ($floorplan->service)
+                    <button type="submit" class="btn btn-primary my-3 me-2" onclick="return submitForm();">
+                        {{ __('buttons.update') }}
+                    </button>
+                @endif
+            </form>
 
             <a id="download-link" style="display: none;"></a>
-        </form>
+        </div>
     </div>
 
     <!-- Modal -->
@@ -372,6 +380,7 @@
             var reviews = @json($reviews);
             var img_sizes = @json($img_sizes);
             var legendPDF = @json($legend);
+            var printData = @json($print_data);
 
             let currentPointSize = 10;
             let currentBase64 = '';
@@ -1162,32 +1171,36 @@
                         // Mostrar previsualización
                         const preview = document.getElementById('image-preview');
                         preview.innerHTML = `
-                <div class="alert alert-success">
-                    <strong>¡Imagen generada!</strong>
-                    <div class="mt-2">
-                        <img src="${dataURL}" class="img-fluid rounded border" style="max-height: 200px;">
-                    </div>
-                    <div class="mt-2">
-                        <button type="button" class="btn btn-primary btn-sm" onclick="downloadImage()">
-                            <i class="bi bi-download"></i> Descargar imagen
-                        </button>
-                        <button type="button" class="btn btn-info btn-sm" onclick="copyToClipboard()">
-                            <i class="bi bi-clipboard"></i> Copiar base64
-                        </button>
-                        <button type="button" class="btn btn-warning btn-sm" onclick="generatePDF()">
-                            <i class="bi bi-file-pdf-fill"></i> Exportar a PDF
-                        </button>
-                    </div>
-                </div>
-            `;
+                            <div class="alert alert-success">
+                                <strong>¡Imagen generada!</strong>
+                                <div class="mt-2">
+                                    <img src="${dataURL}" class="img-fluid rounded border" style="max-height: 200px;">
+                                </div>
+                                <div class="mt-2">
+                                    <button type="button" class="btn btn-primary btn-sm" onclick="downloadImage()">
+                                        <i class="bi bi-download"></i> Descargar imagen
+                                    </button>
+                                    <button type="button" class="btn btn-info btn-sm" onclick="copyToClipboard()">
+                                        <i class="bi bi-clipboard"></i> Copiar base64
+                                    </button>
+                                    <form id="pdfForm" method="POST" action="{{ route('floorplan.print.version') }}" style="display: inline;">
+                                        @csrf
+                                        <input type="hidden" id="pdfJsonData" name="pdf_json_data">
+                                        <button type="button" class="btn btn-success btn-sm" onclick="generatePDF()">
+                                            <i class="bi bi-file-pdf-fill"></i> Descargar PDF
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        `;
                     }, 100);
+
 
                 } catch (error) {
                     console.error('Error al capturar el canvas:', error);
                     alert('Error al generar la imagen: ' + error.message);
                 }
             }
-
 
             function downloadImage() {
                 if (!currentBase64) {
@@ -1215,227 +1228,54 @@
                 });
             }
 
+            function groupByColorAndCode(points) {
+                return points.reduce((acc, point) => {
+                    const key = `${point.color}`;
+                    if (!acc[key]) {
+                        acc[key] = [];
+                    }
+                    acc[key].push(point);
+                    return acc;
+                }, {});
+            }
+
             async function generatePDF() {
+                const button = event.target;
+                const floorplan = '{{ $floorplan }}';
+
                 try {
-                    const loadingAlert = showLoading('Generando PDF...');
+                    const groupedPoints = groupByColorAndCode(points);
 
-                    if (typeof window.jspdf === 'undefined') {
-                        throw new Error('Librería PDF no cargada correctamente');
-                    }
+                    // Obtener la imagen en base64
+                    //const imageBase64 = await generateImageBase64();
 
-                    const {
-                        jsPDF
-                    } = window.jspdf;
-                    const doc = new jsPDF('p', 'mm', 'a4');
+                    // Extraer solo la parte de datos base64 (sin el prefix)
+                    const base64Data = currentBase64.replace(/^data:image\/\w+;base64,/, '');
 
-                    const pageWidth = doc.internal.pageSize.getWidth();
-                    const pageHeight = doc.internal.pageSize.getHeight();
-                    const margin = 15; // Reducir margen para más espacio
-                    const contentWidth = pageWidth - (margin * 2);
+                    // Preparar datos para el JSON
+                    const pdfData = {
+                        image: base64Data,
+                        customer: printData.customer,
+                        service: printData.service,
+                        filename: printData.name,
+                        version: printData.floorplan_version,
+                        date_version: printData.date_version,
+                        device_count: printData.count,
+                        font_family: 'Helvetica', //font_family ?? null,
+                        font_color: '#000000', //font_color ?? null,
+                        groupedPoints: legendPDF
+                    };
 
-                    // HEADER COMPACTO
-                    const logoBase64 = @json($logoBase64);
+                    $('#pdfJsonData').val(JSON.stringify(pdfData));
+                    console.log("Datos para PDF almacenados en input JSON");
 
-                    // Encabezado en una sola línea
-                    doc.setFontSize(12);
-                    doc.setTextColor(0, 0, 0);
-                    doc.setFont(undefined, 'bold');
-
-                    if (logoBase64) {
-                        try {
-                            // Logo más pequeño y compacto
-                            doc.addImage(logoBase64, 'PNG', margin, 12, 40, 8);
-                            doc.text('REPORTE DE PLANO', margin + 45, 18);
-                        } catch (error) {
-                            console.warn('Error al cargar el logo:', error);
-                            doc.text('REPORTE DE PLANO', margin, 18);
-                        }
-                    } else {
-                        doc.text('REPORTE DE PLANO', margin, 18);
-                    }
-
-                    // Información compacta en dos columnas
-                    doc.setFontSize(9);
-                    doc.setFont(undefined, 'normal');
-
-                    const infoY = 25;
-                    doc.text(`Plano: {{ $floorplan->filename }}`, margin, infoY);
-                    doc.text(`Fecha: ${new Date().toLocaleDateString()}`, pageWidth - margin, infoY, {
-                        align: 'right'
-                    });
-
-                    doc.text(`Cliente: {{ $customer->name }}`, margin, infoY + 5);
-                    doc.text(`Servicio: {{ $floorplan->service->name }}`, pageWidth - margin, infoY + 5, {
-                        align: 'right'
-                    });
-
-                    // Línea separadora delgada
-                    doc.setDrawColor(200, 200, 200);
-                    doc.setLineWidth(0.3);
-                    doc.line(margin, infoY + 9, pageWidth - margin, infoY + 9);
-
-                    // Capturar canvas como imagen
-                    const canvasDataURL = canvas.toDataURL('image/png', 0.9);
-
-                    // Calcular dimensiones - más espacio para la imagen
-                    const canvasRatio = canvas.width / canvas.height;
-                    let imgWidth = contentWidth;
-                    let imgHeight = imgWidth / canvasRatio;
-
-                    // Ajustar tamaño para usar mejor el espacio
-                    const maxImageHeight = pageHeight - 100; // Más espacio para la imagen
-                    if (imgHeight > maxImageHeight) {
-                        imgHeight = maxImageHeight;
-                        imgWidth = imgHeight * canvasRatio;
-                    }
-
-                    // Posición de la imagen más arriba
-                    const xPosition = margin + (contentWidth - imgWidth) / 2;
-                    const yPosition = infoY + 15; // Menos espacio después del header
-
-                    // Agregar imagen del plano sin marco para ahorrar espacio
-                    doc.addImage(canvasDataURL, 'PNG', xPosition, yPosition, imgWidth, imgHeight);
-
-                    let currentY = yPosition + imgHeight + 10; // Menos espacio después de la imagen
-
-                    // LEYENDA COMPACTA
-                    if (legendPDF && legendPDF.length > 0) {
-                        // Título de leyenda compacto
-                        doc.setFontSize(11);
-                        doc.setTextColor(0, 0, 0);
-                        doc.setFont(undefined, 'bold');
-                        doc.text('SIMBOLOGÍA', margin, currentY);
-                        currentY += 6;
-
-                        // Configuración de tabla compacta
-                        const columnWidths = [8, 70, 20, 30, 40]; // Columnas más ajustadas
-                        const columnPositions = [margin];
-                        for (let i = 1; i < columnWidths.length; i++) {
-                            columnPositions.push(columnPositions[i - 1] + columnWidths[i - 1]);
-                        }
-
-                        // Encabezados compactos
-                        doc.setFontSize(8);
-                        doc.setTextColor(100, 100, 100);
-                        doc.setFont(undefined, 'bold');
-
-                        doc.text('', columnPositions[0] + 1, currentY + 4);
-                        doc.text('TIPO', columnPositions[1] + 1, currentY + 4);
-                        doc.text('CANT', columnPositions[2] + 1, currentY + 4);
-                        doc.text('CÓDIGO', columnPositions[3] + 1, currentY + 4);
-                        doc.text('NÚMEROS', columnPositions[4] + 1, currentY + 4);
-
-                        // Línea de encabezado más delgada
-                        doc.setDrawColor(220, 220, 220);
-                        doc.setLineWidth(0.2);
-                        doc.line(margin, currentY + 6, margin + contentWidth, currentY + 6);
-
-                        currentY += 8;
-
-                        // Datos de la leyenda compactos
-                        doc.setFontSize(8);
-                        doc.setTextColor(0, 0, 0);
-                        doc.setFont(undefined, 'normal');
-
-                        const lineHeight = 6; // Menor altura de línea
-
-                        legendPDF.forEach((item, index) => {
-                            // Verificar si necesita nueva página
-                            if (currentY > pageHeight - 15) {
-                                doc.addPage();
-                                currentY = 20;
-                                // Redibujar encabezados en nueva página
-                                doc.setFontSize(8);
-                                doc.setTextColor(100, 100, 100);
-                                doc.setFont(undefined, 'bold');
-                                doc.text('', columnPositions[0] + 1, currentY + 4);
-                                doc.text('TIPO', columnPositions[1] + 1, currentY + 4);
-                                doc.text('CANT', columnPositions[2] + 1, currentY + 4);
-                                doc.text('CÓDIGO', columnPositions[3] + 1, currentY + 4);
-                                doc.text('NÚMEROS', columnPositions[4] + 1, currentY + 4);
-                                doc.setDrawColor(220, 220, 220);
-                                doc.line(margin, currentY + 6, margin + contentWidth, currentY + 6);
-                                currentY += 8;
-                                doc.setFontSize(8);
-                                doc.setTextColor(0, 0, 0);
-                                doc.setFont(undefined, 'normal');
-                            }
-
-                            // Ícono de color más pequeño
-                            doc.setFillColor(item.color);
-                            doc.circle(columnPositions[0] + 4, currentY + 3, 2, 'F');
-
-                            // Tipo de dispositivo truncado si es necesario
-                            const typeText = item.type_control_point_name || 'Sin especificar';
-                            const truncatedType = typeText.length > 20 ? typeText.substring(0, 17) + '...' :
-                                typeText;
-                            doc.text(truncatedType, columnPositions[1] + 1, currentY + 4);
-
-                            // Cantidad centrada
-                            doc.text(item.count.toString(), columnPositions[2] + (columnWidths[2] / 2), currentY +
-                                4, {
-                                    align: 'center'
-                                });
-
-                            // Código
-                            const code = item.code || findCode(item.type_control_point_id) || 'N/A';
-                            doc.text(code, columnPositions[3] + 1, currentY + 4);
-
-                            // Números formateados compactos
-                            const nplansText = item.nplans ? formatNplansCompact(item.nplans) : 'N/A';
-                            const compactNplans = nplansText.length > 25 ? nplansText.substring(0, 22) + '...' :
-                                nplansText;
-                            doc.text(compactNplans, columnPositions[4] + 1, currentY + 4);
-
-                            currentY += lineHeight;
-                        });
-
-                        // RESUMEN SUPER COMPACTO
-                        currentY += 4;
-                        if (currentY > pageHeight - 20) {
-                            doc.addPage();
-                            currentY = 20;
-                        }
-
-                        const totalDevices = legendPDF.reduce((sum, item) => sum + item.count, 0);
-
-                        doc.setFontSize(9);
-                        doc.setFont(undefined, 'bold');
-                        doc.text('RESUMEN:', margin, currentY);
-
-                        doc.setFontSize(8);
-                        doc.setFont(undefined, 'normal');
-                        doc.text(`${totalDevices} dispositivos | ${legendPDF.length} tipos`, margin + 25, currentY);
-                    }
-
-                    // PIE DE PÁGINA COMPACTO
-                    const totalPages = doc.internal.getNumberOfPages();
-                    for (let i = 1; i <= totalPages; i++) {
-                        doc.setPage(i);
-                        doc.setFontSize(7);
-                        doc.setTextColor(100, 100, 100);
-                        doc.text(
-                            `Página ${i} de ${totalPages} | ${new Date().toLocaleDateString()}`,
-                            pageWidth / 2,
-                            pageHeight - 7, {
-                                align: 'center'
-                            }
-                        );
-                    }
-
-                    // Guardar PDF
-                    const fileName = `plano-{{ $floorplan->filename }}-${new Date().toISOString().slice(0,10)}.pdf`;
-                    doc.save(fileName);
-
-                    loadingAlert.remove();
+                    // Aquí puedes proceder con el envío del formulario
+                    // Por ejemplo:
+                    $('#pdfForm').submit();
 
                 } catch (error) {
-                    console.error('Error al generar PDF:', error);
-                    alert('Error al generar el PDF: ' + error.message);
-
-                    if (loadingAlert && loadingAlert.remove) {
-                        loadingAlert.remove();
-                    }
+                    console.error('Error al preparar datos para PDF:', error);
+                    alert('Error al preparar datos para PDF: ' + error.message);
                 }
             }
 
