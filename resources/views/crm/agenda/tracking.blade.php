@@ -20,12 +20,16 @@
                  <a class="nav-link {{ $nav == 'c' ? 'active' : '' }}" aria-current="page"
                      href="{{ route('crm.agenda') }}">Calendario</a>
              </li>
-             <li class="nav-item">
-                 <a class="nav-link {{ $nav == 't' ? 'active' : '' }}" href="{{ route('crm.tracking') }}">Seguimientos</a>
-             </li>
-             <li class="nav-item">
-                 <a class="nav-link {{ $nav == 'q' ? 'active' : '' }}" href="{{ route('crm.quotation') }}">Cotizaciones</a>
-             </li>
+             @if(tenant_can('handle_tracking'))
+                <li class="nav-item">
+                    <a class="nav-link {{ $nav == 't' ? 'active' : '' }}" href="{{ route('crm.tracking') }}">Seguimientos</a>
+                </li>
+             @endif
+             @if(tenant_can('handle_invoice'))
+                <li class="nav-item">
+                    <a class="nav-link {{ $nav == 'q' ? 'active' : '' }}" href="{{ route('crm.quotation') }}">Cotizaciones</a>
+                </li>
+             @endif
          </ul>
          <div class="card">
              <div class="card-header fw-bold">

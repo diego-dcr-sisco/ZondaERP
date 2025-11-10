@@ -44,21 +44,48 @@ class QuoteController extends Controller
         $services = Service::select('id', 'name')->orderBy('name')->get();
         $quote_status = QuoteStatus::cases();
         $quote_priority = QuotePriority::cases();
-
+        
         if ($customer::class == Lead::class) {
             $navigation = [
-                'Cliente potencial' => route('customer.edit.lead', ['id' => $customer->id]),
-                'Cotizaciones' => route('customer.quote', ['id' => $customer->id, 'class' => 'lead']),
+                'Cliente potencial' => [
+                    'route' => route('customer.edit.lead', ['id' => $customer->id]),
+                    'permission' => null
+                ],
+                'Cotizaciones' => [
+                    'route' => route('customer.quote', ['id' => $customer->id, 'class' => 'lead']),
+                    'permission' => 'handle_quotes'
+                ]
             ];
         } else {
             $navigation = [
-                'Sede' => route('customer.edit.sede', ['id' => $customer->id]),
-                'Archivos' => route('customer.show.sede.files', ['id' => $customer->id]),
-                'Planos' => route('customer.show.sede.floorplans', ['id' => $customer->id]),
-                'Portal' => route('customer.show.sede.portal', ['id' => $customer->id]),
-                'Areas de aplicación' => route('customer.show.sede.areas', ['id' => $customer->id]),
-                //'Seguimientos' => route('customer.show.sede.trackings', ['id' => $customer->id]),
-                'Cotizaciones' => route('customer.quote', ['id' => $customer->id, 'class' => 'customer']),
+                'Sede' => [
+                    'route' => route('customer.edit.sede', ['id' => $customer->id]),
+                    'permission' => null
+                ],
+                'Archivos' => [
+                    'route' => route('customer.show.sede.files', ['id' => $customer->id]),
+                    'permission' => null
+                ],
+                'Planos' => [
+                    'route' => route('customer.show.sede.floorplans', ['id' => $customer->id]),
+                    'permission' => 'handle_floorplans'
+                ],
+                'Portal' => [
+                    'route' => route('customer.show.sede.portal', ['id' => $customer->id]),
+                    'permission' => null
+                ],
+                'Areas de aplicación' => [
+                    'route' => route('customer.show.sede.areas', ['id' => $customer->id]),
+                    'permission' => null
+                ],
+                /*'Seguimientos' => [
+                    'route' => route('customer.show.sede.trackings', ['id' => $customer->id]),
+                    'permission' => null
+                ],*/
+                'Cotizaciones' => [
+                    'route' => route('customer.quote', ['id' => $customer->id, 'class' => 'customer']),
+                    'permission' => 'handle_quotes'
+                ]
             ];
         }
 
@@ -126,18 +153,45 @@ class QuoteController extends Controller
 
         if ($quote->model_type == Lead::class) {
             $navigation = [
-                'Cliente potencial' => route('customer.edit.lead', ['id' => $customer_id]),
-                'Cotizaciones' => route('customer.quote', ['id' => $customer_id, 'class' => 'lead']),
+                'Cliente potencial' => [
+                    'route' => route('customer.edit.lead', ['id' => $customer_id]),
+                    'permission' => null
+                ],      
+                'Cotizaciones' => [
+                    'route' => route('customer.quote', ['id' => $customer_id, 'class' => 'lead']),
+                    'permission' => 'handle_quotes'
+                ]
             ];
         } else {
             $navigation = [
-                'Sede' => route('customer.edit.sede', ['id' => $customer_id]),
-                'Archivos' => route('customer.show.sede.files', ['id' => $customer_id]),
-                'Planos' => route('customer.show.sede.floorplans', ['id' => $customer_id]),
-                'Portal' => route('customer.show.sede.portal', ['id' => $customer_id]),
-                'Areas de aplicación' => route('customer.show.sede.areas', ['id' => $customer_id]),
-                //'Seguimientos' => route('customer.show.sede.trackings', ['id' => $customer->id]),
-                'Cotizaciones' => route('customer.quote', ['id' => $customer_id, 'class' => 'customer']),
+                'Sede' => [
+                    'route' => route('customer.edit.sede', ['id' => $customer_id]),
+                    'permission' => null
+                ],
+                'Archivos' => [
+                    'route' => route('customer.show.sede.files', ['id' => $customer_id]),
+                    'permission' => null
+                ],
+                'Planos' => [
+                    'route' => route('customer.show.sede.floorplans', ['id' => $customer_id]),
+                    'permission' => 'handle_floorplans'
+                ],
+                'Portal' => [
+                    'route' => route('customer.show.sede.portal', ['id' => $customer_id]),
+                    'permission' => null
+                ],
+                'Areas de aplicación' => [
+                    'route' => route('customer.show.sede.areas', ['id' => $customer_id]),
+                    'permission' => null
+                ],
+                /*'Seguimientos' => [
+                'route' => route('customer.show.sede.trackings', ['id' => $customer->id]),
+                'permission' => null
+                ],*/
+                'Cotizaciones' => [
+                    'route' => route('customer.quote', ['id' => $customer_id, 'class' => 'customer']),
+                    'permission' => 'handle_quotes'
+                ]
             ];
         }
 

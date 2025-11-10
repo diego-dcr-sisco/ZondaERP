@@ -48,8 +48,12 @@ class QualityController extends Controller
         $size = $this->size;
         $customers = Customer::where('general_sedes', '!=', 0)->orderBy('name', 'asc')->paginate($this->size);
         $matrix = Customer::where('general_sedes', 0)->get();
-        $navigation = [
-            'Clientes' => route('quality.customers'),
+
+        $navigation =[
+            'Clientes' => [
+                'route' => route('quality.customers'),
+                'permission' => null,
+            ]
         ];
 
         if (auth()->user()->hasAnyRole(['SupervisorCalidad', 'AdministradorDireccion'])) {
@@ -69,7 +73,10 @@ class QualityController extends Controller
         $control_customers = Customer::whereIn('administrative_id', $quality_users->pluck('id'))->where('general_sedes', 0)->paginate($this->size);
         $size = $this->size;
         $navigation = [
-            'Clientes' => route('quality.customers'),
+            'Clientes' => [
+                'route' => route('quality.customers'),
+                'permission' => null,
+            ]
             //'Relaciones' => route('quality.tracing'),
         ];
 
@@ -133,7 +140,10 @@ class QualityController extends Controller
 
         $customers = $customers->orderBy('name', 'asc')->paginate($this->size);
         $navigation = [
-            'Clientes' => route('quality.customers'),
+            'Clientes' => [
+                'route' => route('quality.customers'),
+                'permission' => null,
+            ]
             //'Relaciones' => route('quality.tracing'),
         ];
 
@@ -270,16 +280,40 @@ class QualityController extends Controller
 
         
         $navigation = [
-            'Ordenes de servicio' => route('quality.customer', ['id' => $customer->id]),
-            //'Analíticas' => route('quality.analytics', ['id' => $customer->id]),
-            'Contrato' => route('quality.contracts', ['id' => $customer->id]),
-            'Planos' => route('quality.floorplans', ['id' => $customer->id]),
-            'Áreas de aplicación' => route('quality.application-areas', ['id' => $customer->id]),
-            'Dispositivos' => route('quality.devices', ['id' => $customer->id]),
-            'Archivos' => route('quality.files', ['id' => $customer->id]),
-            'Planes de rotación' => route('quality.rotation-plan.index', ['id' => $customer->id]),
-
+            'Ordenes de servicio' => [
+                'route' => route('quality.customer', ['id' => $customer->id]),
+                'permission' => null,
+            ], 
+            /*'Analíticas' => [
+                'route' => route('quality.analytics', ['id' => $customer->id]),
+                'permission' => null,
+            ],*/
+            'Contrato' => [
+                'route' => route('quality.contracts', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Planos' => [
+                'route' => route('quality.floorplans', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Áreas de aplicación' => [
+                'route' => route('quality.application-areas', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Dispositivos' => [
+                'route' => route('quality.devices', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Archivos' => [
+                'route' => route('quality.files', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Planes de rotación' => [
+                'route' => route('quality.rotation-plan.index', ['id' => $customer->id]),
+                'permission' => null,
+            ]
         ];
+
         return view(
             'dashboard.quality.show.customer',
             compact('customer', 'count_devices', 'pendings', 'technicians', 'opportunity_areas', 'rotation_plans', 'navigation', 'orders', 'customer_ranges', 'order_status', 'size')
@@ -292,14 +326,38 @@ class QualityController extends Controller
         $customer = Customer::find($id);
         $service_types = ServiceType::all();
         $navigation = [
-            'Ordenes de servicio' => route('quality.customer', ['id' => $customer->id]),
-            //'Analíticas' => route('quality.analytics', ['id' => $customer->id]),
-            'Contrato' => route('quality.contracts', ['id' => $customer->id]),
-            'Planos' => route('quality.floorplans', ['id' => $customer->id]),
-            'Áreas de aplicación' => route('quality.application-areas', ['id' => $customer->id]),
-            'Dispositivos' => route('quality.devices', ['id' => $customer->id]),
-            'Archivos' => route('quality.files', ['id' => $customer->id]),
-            'Planes de rotación' => route('quality.rotation-plan.index', ['id' => $customer->id]),
+            'Ordenes de servicio' => [
+                'route' => route('quality.customer', ['id' => $customer->id]),
+                'permission' => null,
+            ], 
+            /*'Analíticas' => [
+                'route' => route('quality.analytics', ['id' => $customer->id]),
+                'permission' => null,
+            ],*/
+            'Contrato' => [
+                'route' => route('quality.contracts', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Planos' => [
+                'route' => route('quality.floorplans', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Áreas de aplicación' => [
+                'route' => route('quality.application-areas', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Dispositivos' => [
+                'route' => route('quality.devices', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Archivos' => [
+                'route' => route('quality.files', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Planes de rotación' => [
+                'route' => route('quality.rotation-plan.index', ['id' => $customer->id]),
+                'permission' => null,
+            ]
         ];
         
         return view('dashboard.quality.files.index', compact('customer', 'filenames', 'navigation'));
@@ -318,16 +376,40 @@ class QualityController extends Controller
             ->paginate($request->input('size', 25));
 
         $navigation = [
-            'Ordenes de servicio' => route('quality.customer', ['id' => $customer->id]),
-            //'Analíticas' => route('quality.analytics', ['id' => $customer->id]),
-            'Contrato' => route('quality.contracts', ['id' => $customer->id]),
-            'Planos' => route('quality.floorplans', ['id' => $customer->id]),
-            'Áreas de aplicación' => route('quality.application-areas', ['id' => $customer->id]),
-            'Dispositivos' => route('quality.devices', ['id' => $customer->id]),
-            'Archivos' => route('quality.files', ['id' => $customer->id]),
-            'Planes de rotación' => route('quality.rotation-plan.index', ['id' => $customer->id]),
-
+            'Ordenes de servicio' => [
+                'route' => route('quality.customer', ['id' => $customer->id]),
+                'permission' => null,
+            ], 
+            /*'Analíticas' => [
+                'route' => route('quality.analytics', ['id' => $customer->id]),
+                'permission' => null,
+            ],*/
+            'Contrato' => [
+                'route' => route('quality.contracts', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Planos' => [
+                'route' => route('quality.floorplans', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Áreas de aplicación' => [
+                'route' => route('quality.application-areas', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Dispositivos' => [
+                'route' => route('quality.devices', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Archivos' => [
+                'route' => route('quality.files', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Planes de rotación' => [
+                'route' => route('quality.rotation-plan.index', ['id' => $customer->id]),
+                'permission' => null,
+            ]
         ];
+
         return view('dashboard.quality.rotation-plan.index', compact('customer','rotationPlans','contracts','navigation'));
     }
 
@@ -379,16 +461,40 @@ class QualityController extends Controller
 
         $rotationPlans = $query->paginate($this->size);
         $navigation = [
-            'Ordenes de servicio' => route('quality.customer', ['id' => $customer->id]),
-            //'Analíticas' => route('quality.analytics', ['id' => $customer->id]),
-            'Contrato' => route('quality.contracts', ['id' => $customer->id]),
-            'Planos' => route('quality.floorplans', ['id' => $customer->id]),
-            'Áreas de aplicación' => route('quality.application-areas', ['id' => $customer->id]),
-            'Dispositivos' => route('quality.devices', ['id' => $customer->id]),
-            'Archivos' => route('quality.files', ['id' => $customer->id]),
-            'Planes de rotación' => route('quality.rotation-plan.index', ['id' => $customer->id]),
-
+            'Ordenes de servicio' => [
+                'route' => route('quality.customer', ['id' => $customer->id]),
+                'permission' => null,
+            ], 
+            /*'Analíticas' => [
+                'route' => route('quality.analytics', ['id' => $customer->id]),
+                'permission' => null,
+            ],*/
+            'Contrato' => [
+                'route' => route('quality.contracts', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Planos' => [
+                'route' => route('quality.floorplans', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Áreas de aplicación' => [
+                'route' => route('quality.application-areas', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Dispositivos' => [
+                'route' => route('quality.devices', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Archivos' => [
+                'route' => route('quality.files', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Planes de rotación' => [
+                'route' => route('quality.rotation-plan.index', ['id' => $customer->id]),
+                'permission' => null,
+            ]
         ];
+
         return view('dashboard.quality.rotation-plan.index', compact('customer', 'rotationPlans', 'navigation'));
     }
 
@@ -469,15 +575,38 @@ class QualityController extends Controller
         $customer = Customer::find($id);
         $contracts = Contract::where('customer_id', $customer->id)->orderBy('enddate', 'desc')->paginate($this->size);
         $navigation = [
-            'Ordenes de servicio' => route('quality.customer', ['id' => $customer->id]),
-            //'Analíticas' => route('quality.analytics', ['id' => $customer->id]),
-            'Contrato' => route('quality.contracts', ['id' => $customer->id]),
-            'Planos' => route('quality.floorplans', ['id' => $customer->id]),
-            'Áreas de aplicación' => route('quality.application-areas', ['id' => $customer->id]),
-            'Dispositivos' => route('quality.devices', ['id' => $customer->id]),
-            'Archivos' => route('quality.files', ['id' => $customer->id]),
-            'Planes de rotación' => route('quality.rotation-plan.index', ['id' => $customer->id]),
-
+            'Ordenes de servicio' => [
+                'route' => route('quality.customer', ['id' => $customer->id]),
+                'permission' => null,
+            ], 
+            /*'Analíticas' => [
+                'route' => route('quality.analytics', ['id' => $customer->id]),
+                'permission' => null,
+            ],*/
+            'Contrato' => [
+                'route' => route('quality.contracts', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Planos' => [
+                'route' => route('quality.floorplans', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Áreas de aplicación' => [
+                'route' => route('quality.application-areas', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Dispositivos' => [
+                'route' => route('quality.devices', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Archivos' => [
+                'route' => route('quality.files', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Planes de rotación' => [
+                'route' => route('quality.rotation-plan.index', ['id' => $customer->id]),
+                'permission' => null,
+            ]
         ];
 
         return view(
@@ -551,16 +680,40 @@ class QualityController extends Controller
         $customer = Customer::find($id);
         $zones = ApplicationArea::where('customer_id', $customer->id)->paginate($this->size);
         $navigation = [
-            'Ordenes de servicio' => route('quality.customer', ['id' => $customer->id]),
-            //'Analíticas' => route('quality.analytics', ['id' => $customer->id]),
-            'Contrato' => route('quality.contracts', ['id' => $customer->id]),
-            'Planos' => route('quality.floorplans', ['id' => $customer->id]),
-            'Áreas de aplicación' => route('quality.application-areas', ['id' => $customer->id]),
-            'Dispositivos' => route('quality.devices', ['id' => $customer->id]),
-            'Archivos' => route('quality.files', ['id' => $customer->id]),
-            'Planes de rotación' => route('quality.rotation-plan.index', ['id' => $customer->id]),
-
+            'Ordenes de servicio' => [
+                'route' => route('quality.customer', ['id' => $customer->id]),
+                'permission' => null,
+            ], 
+            /*'Analíticas' => [
+                'route' => route('quality.analytics', ['id' => $customer->id]),
+                'permission' => null,
+            ],*/
+            'Contrato' => [
+                'route' => route('quality.contracts', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Planos' => [
+                'route' => route('quality.floorplans', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Áreas de aplicación' => [
+                'route' => route('quality.application-areas', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Dispositivos' => [
+                'route' => route('quality.devices', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Archivos' => [
+                'route' => route('quality.files', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Planes de rotación' => [
+                'route' => route('quality.rotation-plan.index', ['id' => $customer->id]),
+                'permission' => null,
+            ]
         ];
+
         return view(
             'dashboard.quality.zone.index',
             compact('zones', 'customer', 'zone_types', 'navigation')
@@ -628,14 +781,38 @@ class QualityController extends Controller
             }
         }
         $navigation = [
-            'Ordenes de servicio' => route('quality.customer', ['id' => $customer->id]),
-            //'Analíticas' => route('quality.analytics', ['id' => $customer->id]),
-            'Contrato' => route('quality.contracts', ['id' => $customer->id]),
-            'Planos' => route('quality.floorplans', ['id' => $customer->id]),
-            'Áreas de aplicación' => route('quality.application-areas', ['id' => $customer->id]),
-            'Dispositivos' => route('quality.devices', ['id' => $customer->id]),
-            'Archivos' => route('quality.files', ['id' => $customer->id]),
-            'Planes de rotación' => route('quality.rotation-plan.index', ['id' => $customer->id]),
+            'Ordenes de servicio' => [
+                'route' => route('quality.customer', ['id' => $customer->id]),
+                'permission' => null,
+            ], 
+            /*'Analíticas' => [
+                'route' => route('quality.analytics', ['id' => $customer->id]),
+                'permission' => null,
+            ],*/
+            'Contrato' => [
+                'route' => route('quality.contracts', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Planos' => [
+                'route' => route('quality.floorplans', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Áreas de aplicación' => [
+                'route' => route('quality.application-areas', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Dispositivos' => [
+                'route' => route('quality.devices', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Archivos' => [
+                'route' => route('quality.files', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Planes de rotación' => [
+                'route' => route('quality.rotation-plan.index', ['id' => $customer->id]),
+                'permission' => null,
+            ]
         ];
 
         return view(
@@ -823,14 +1000,38 @@ class QualityController extends Controller
         $consumptionData = $this->deviceConsumptionPrueba($consumptionRequest,(string) $customer->id);
 
         $navigation = [
-                'Ordenes de servicio' => route('quality.customer', ['id' => $customer->id]),
-                //'Analíticas' => route('quality.analytics', ['id' => $customer->id]),
-                'Contrato' => route('quality.contracts', ['id' => $customer->id]),
-                'Planos' => route('quality.floorplans', ['id' => $customer->id]),
-                'Áreas de aplicación' => route('quality.application-areas', ['id' => $customer->id]),
-                'Dispositivos' => route('quality.devices', ['id' => $customer->id]),
-                'Archivos' => route('quality.files', ['id' => $customer->id]),
-                'Planes de rotación' => route('quality.rotation-plan.index', ['id' => $customer->id]),
+            'Ordenes de servicio' => [
+                'route' => route('quality.customer', ['id' => $customer->id]),
+                'permission' => null,
+            ], 
+            /*'Analíticas' => [
+                'route' => route('quality.analytics', ['id' => $customer->id]),
+                'permission' => null,
+            ],*/
+            'Contrato' => [
+                'route' => route('quality.contracts', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Planos' => [
+                'route' => route('quality.floorplans', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Áreas de aplicación' => [
+                'route' => route('quality.application-areas', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Dispositivos' => [
+                'route' => route('quality.devices', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Archivos' => [
+                'route' => route('quality.files', ['id' => $customer->id]),
+                'permission' => null,
+            ],
+            'Planes de rotación' => [
+                'route' => route('quality.rotation-plan.index', ['id' => $customer->id]),
+                'permission' => null,
+            ]
         ];
 
         return view('dashboard.quality.analytics.index', array_merge($data, [

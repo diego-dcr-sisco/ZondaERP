@@ -169,46 +169,6 @@ class CRMController extends Controller
     public function __construct()
     {
         $this->navigation = [
-            'Agenda' => route('crm.agenda'),
-            'Clientes' => route('customer.index'),
-            'Sedes' => route('customer.index.sedes'),
-            'Clientes potenciales' => Route('customer.index.leads'),
-            'Ordenes de servicio' => route('order.index'),
-            'Estadisticas' => route('crm.chart.dashboard'),
-        ];
-    }
-
-    // s1
-    public function index()
-    {
-        $navigation = $this->navigation;
-        return view('crm.index', compact('navigation'));
-    }
-
-    public function agenda()
-    {
-        $startDate = now()->startOfWeek();
-        $endDate = now()->endOfWeek();
-        $calendar_data = $this->makeAgenda($startDate, $endDate);
-
-        $query_trackings = Tracking::whereBetween('next_date', [$startDate, $endDate])
-            ->orderBy('next_date', 'asc');
-
-        $quotes = Quote::whereBetween('created_at', [$startDate, $endDate])
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        $navigation = $this->navigation;
-        // $navigationItems = [
-        //     'Agenda' => route('crm.agenda'),'permission' => null,
-        //     'Clientes' => route('customer.index'),'permission' => null,
-        //     'Sedes' => route('customer.index.sedes'), 'permission' => 'show_sedes',
-        //     'Clientes potenciales' => route('customer.index.leads'),'permission' => null,
-        //     'Estadisticas' => route('crm.chart.dashboard'), 'permission' => null,
-        //     'Facturacion' => route('invoices.index'), 'permission' => 'handle_invoice',
-        // ];
-
-        $navigationItems = [
             'Agenda' => [
                 'route' => route('crm.agenda'),
                 'permission' => 'handle_planning'
@@ -239,20 +199,35 @@ class CRMController extends Controller
             ]*/
         ];
 
-        $navigation = [];
+    }
 
-        foreach ($navigationItems as $label => $item) {
-            if ($item['permission'] === null || tenant_can($item['permission'])) {
-                $navigation[$label] = $item['route'];
-            }
-        }
+    // s1
+    public function index()
+    {
+        $navigation = $this->navigation;
+        return view('crm.index', compact('navigation'));
+    }
 
+    public function agenda()
+    {
+        $startDate = now()->startOfWeek();
+        $endDate = now()->endOfWeek();
+        $calendar_data = $this->makeAgenda($startDate, $endDate);
+
+        $query_trackings = Tracking::whereBetween('next_date', [$startDate, $endDate])
+            ->orderBy('next_date', 'asc');
+
+        $quotes = Quote::whereBetween('created_at', [$startDate, $endDate])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        
         return view('crm.agenda.calendar', [
             'calendar_events' => json_encode($calendar_data),
             'trackings' => $query_trackings->orderByRaw("FIELD(status, '" . implode("','", ['active', 'completed', 'canceled']) . "')")->paginate($this->size),
             'order_status' => OrderStatus::all(),
             'quotes' => $quotes,
-            'navigation' => $navigation,
+            'navigation' => $this->navigation,
             'nav' => 'c',
         ]);
     }

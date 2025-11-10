@@ -27,16 +27,46 @@ class ZoneController extends Controller
     ];
     
     public $navigation = [
-        'Almacenes' => '/stock',
-        'Lotes' => '/lot/index',
-        'Productos' => '/products',
-        'Movimientos' => '/stock/movements',
-        'Zonas' => '/customer-zones',
-        'Consumos' => '/consumptions/',
-        // 'Pedidos' => '/consumptions',
-        // 'Productos en ordenes' => '/stock/orders-products',
-        // 'Estadisticas' => 'stock/analytics',
-        // 'Compras' => '/purchase-requisition/purchases',
+        'Almacenes' => [
+            'route' => '/stock',
+            'permission' => null
+        ],
+        'Lotes' => [
+            'route' => '/lot/index',
+            'permission' => null
+        ],
+        'Productos' => [
+            'route' => '/products',
+            'permission' => null
+        ],
+        'Movimientos' => [
+            'route' => '/stock/movements',
+            'permission' => null
+        ],
+        'Zonas' => [
+            'route' => '/customer-zones',
+            'permission' => null
+        ],
+        'Consumos' => [
+            'route' => '/consumptions',
+            'permision' => null
+        ],
+        /*'Pedidos' => [
+            'route' => '/consumptions',
+            'permission' => null
+        ],
+        'Productos en ordenes' => [
+            'route' => '/stock/orders-products',
+            'permission' => null
+        ],
+        'Estadisticas' => [
+            'route' => 'stock/analytics',
+            'permission' => null
+        ],
+        'Compras' => [
+            'route' => '/purchase-requisition/purchases',
+            'permission' => null
+        ]*/
     ];
 
     

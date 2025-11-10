@@ -169,10 +169,22 @@ class ServiceController extends Controller
         $prefixes = ServicePrefix::all();
 
         $navigation = [
-            'Servicio' => route('service.edit', ['id' => $service->id]),
-            'Plagas' => route('service.edit.pests', ['id' => $service->id]),
-            'Métodos de aplicación' => route('service.edit.appMethods', ['id' => $service->id]),
-            'Productos' => route('service.edit.products', ['id' => $service->id]),
+            'Servicio' => [
+                'route' => route('service.edit', ['id' => $service->id]),
+                'permission' => null
+            ],
+            'Plagas' => [
+                'route' => route('service.edit.pests', ['id' => $service->id]),
+                'permission' => null
+            ],
+            'Métodos de aplicación' => [
+                'route' => route('service.edit.appMethods', ['id' => $service->id]),
+                'permission' => null
+            ],
+            'Productos' => [
+                'route' => route('service.edit.products', ['id' => $service->id]),
+                'permission' => null
+            ]
         ];
 
         return view(
@@ -193,10 +205,22 @@ class ServiceController extends Controller
         $pest_categories = PestCategory::all();
 
         $navigation = [
-            'Servicio' => route('service.edit', ['id' => $service->id]),
-            'Plagas' => route('service.edit.pests', ['id' => $service->id]),
-            'Métodos de aplicación' => route('service.edit.appMethods', ['id' => $service->id]),
-            'Productos' => route('service.edit.products', ['id' => $service->id]),
+            'Servicio' => [
+                'route' => route('service.edit', ['id' => $service->id]),
+                'permission' => null
+            ],
+            'Plagas' => [
+                'route' => route('service.edit.pests', ['id' => $service->id]),
+                'permission' => null
+            ],
+            'Métodos de aplicación' => [
+                'route' => route('service.edit.appMethods', ['id' => $service->id]),
+                'permission' => null
+            ],
+            'Productos' => [
+                'route' => route('service.edit.products', ['id' => $service->id]),
+                'permission' => null
+            ]
         ];
 
         return view(
@@ -215,10 +239,22 @@ class ServiceController extends Controller
         $application_methods = ApplicationMethod::orderBy('name', 'asc')->get();
 
         $navigation = [
-            'Servicio' => route('service.edit', ['id' => $service->id]),
-            'Plagas' => route('service.edit.pests', ['id' => $service->id]),
-            'Métodos de aplicación' => route('service.edit.appMethods', ['id' => $service->id]),
-            'Productos' => route('service.edit.products', ['id' => $service->id]),
+            'Servicio' => [
+                'route' => route('service.edit', ['id' => $service->id]),
+                'permission' => null
+            ],
+            'Plagas' => [
+                'route' => route('service.edit.pests', ['id' => $service->id]),
+                'permission' => null
+            ],
+            'Métodos de aplicación' => [
+                'route' => route('service.edit.appMethods', ['id' => $service->id]),
+                'permission' => null
+            ],
+            'Productos' => [
+                'route' => route('service.edit.products', ['id' => $service->id]),
+                'permission' => null
+            ]
         ];
 
         return view(
@@ -237,10 +273,22 @@ class ServiceController extends Controller
         $pest_categories = PestCategory::all();
 
         $navigation = [
-            'Servicio' => route('service.edit', ['id' => $service->id]),
-            'Plagas' => route('service.edit.pests', ['id' => $service->id]),
-            'Métodos de aplicación' => route('service.edit.appMethods', ['id' => $service->id]),
-            'Productos' => route('service.edit.products', ['id' => $service->id]),
+            'Servicio' => [
+                'route' => route('service.edit', ['id' => $service->id]),
+                'permission' =>null
+            ],
+            'Plagas' => [
+                'route' => route('service.edit.pests', ['id' => $service->id]),
+                'permission' => null
+            ],
+            'Métodos de aplicación' => [
+                'route' => route('service.edit.appMethods', ['id' => $service->id]),
+                'permission' => null
+            ],
+            'Productos' => [
+                'route' => route('service.edit.products', ['id' => $service->id]),
+                'permission' => null
+            ]
         ];
 
         return view(

@@ -249,8 +249,14 @@ class PagesController extends Controller
         $schedule_data = $this->getPlanningData($start_date, $end_date);
 
         $navigation = [
-            'Cronograma' => route('planning.schedule'),
-            'Actividades' => route('planning.activities')
+            'Cronograma' => [
+                'route' => route('planning.schedule'),
+                'permission' => null
+            ],
+            'Actividades' => [
+                'route' => route('planning.activities'),
+                'permission' => null
+            ]
         ];
 
         return view(
@@ -262,8 +268,14 @@ class PagesController extends Controller
     public function activities()
     {
         $navigation = [
-            'Cronograma' => route('planning.schedule'),
-            'Actividades' => route('planning.activities')
+            'Cronograma' => [
+                'route' => route('planning.schedule'),
+                'permission' => null
+            ],
+            'Actividades' => [
+                'route' => route('planning.activities'),
+                'permission' => null
+            ]
         ];
 
         // Obtener los datos de planificación por técnico
@@ -402,11 +414,24 @@ class PagesController extends Controller
 
     public function rrhh(Request $request, $section)
     {
+        
         $navigation = [
-            'Crear usuario' => '/users/create',
-            'Usuarios pendientes' => '/RRHH/1',
-            'Documentos pendientes' => '/RRHH/2',
-            'Documentos por vencer' => '/RRHH/3'
+            'Crear usuario' => [
+                'route' => '/users/create',
+                'permission' => null
+            ],
+            'Usuarios pendientes' => [
+                'route' => '/RRHH/1',
+                'permission' => null
+            ],
+            'Documentos pendientes' => [
+                'route' => '/RRHH/2',
+                'permission' => null
+            ],
+            'Documentos por vencer' => [
+                'route' => '/RRHH/3',
+                'permission' => null
+            ]
         ];
 
         $search = $request->input('search');

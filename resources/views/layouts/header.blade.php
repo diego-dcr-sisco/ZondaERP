@@ -165,7 +165,7 @@
                             <li><a class="dropdown-item text-light" href="{{ route('branch.index') }}"><i
                                         class="bi bi-globe-americas"></i>
                                     Sucursales</a></li>
-                            @if (tenant_can('handle_stock'))
+                            @if (tenant_can('handle_customer_zones'))
                                 <li><a class="dropdown-item text-light" href="{{ route('comercial-zones.index') }}"><i
                                             class="bi bi-geo-alt-fill"></i>
                                         Zonas
