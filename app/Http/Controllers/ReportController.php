@@ -944,7 +944,7 @@ class ReportController extends Controller
             ]);
 
         }
-        
+
         $dps = DeviceProduct::where('order_id', $order->id)->get();
         $groupedProducts = $dps->groupBy('product_id');
 
@@ -1067,7 +1067,7 @@ class ReportController extends Controller
     public function print(string $orderId)
     {
         $tempDir = storage_path('app/temp/signatures');
-        
+
         $data = [];
         $certificate = new Certificate($orderId);
         $certificate->order();
@@ -1082,7 +1082,7 @@ class ReportController extends Controller
         $data = $certificate->getData();
         // Obtener la configuración de apariencia
         $appearance = AppearanceSetting::first();
-        
+
         // Si no existe, crear una instancia con valores por defecto
         if (!$appearance) {
             $appearance = new AppearanceSetting();
@@ -1091,8 +1091,8 @@ class ReportController extends Controller
         // Agregar los colores y la ruta del logo a los datos que se pasan a la vista
         $data['primaryColor'] = $appearance->primary_color;
         $data['secondaryColor'] = $appearance->secondary_color;
-        $data['logoPath'] = $this->getLogoPath($appearance);
-        $data['watermarkPath'] = $appearance->watermark_path ?: 'images/watermark.png';
+        $data['logoPath'] = $appearance->logo_path;
+        $data['watermarkPath'] = 'images/zonda/watermark.png';
         $data['watermarkOpacity'] = $appearance->watermark_opacity ?: 0.1;
 
         //Si son texto plano formatear las notas antes de generar el PDF
@@ -1153,12 +1153,14 @@ class ReportController extends Controller
                     $filename = $data['filename'] ?? 'certificado_' . $order_id . '.pdf';
                     $tempPath = $this->temp_bulk . $timer . '/' . $filename;
 
-                   
-                    // Obtener la configuración de apariencia
-                        $appearance = AppearanceSetting::first();
 
-                        // Agregar los paths correctos a los datos
-                        $data['logoPath'] = $this->getLogoPath($appearance); 
+                    // Obtener la configuración de apariencia
+                    $appearance = AppearanceSetting::first();
+
+                    // Agregar los paths correctos a los datos
+                    $data['logoPath'] = $appearance->logo_path;
+                    $data['watermarkPath'] = 'images/zonda/watermark.png';
+                    
                     // Generar PDF
                     $pdf = Pdf::loadView('report.pdf.certificate', $data);
                     Storage::put($tempPath, $pdf->output());
@@ -1652,28 +1654,32 @@ class ReportController extends Controller
     }
 
     /**
- * Obtener el path correcto del logo
- */
+     * Obtener el path correcto del logo
+     */
     // private function getLogoPath($appearance)
     // {
     //     // Si es un path personalizado (en storage/tenants/)
     //     if (str_starts_with($appearance->logo_path, 'tenants/')) {
     //         $storagePath = storage_path('app/' . $appearance->logo_path);
-            
+
     //         // Verificar si el archivo existe en el storage
     //         if (file_exists($storagePath)) {
     //             return $storagePath;
     //         }
     //     }
-        
+
     //     // Fallback al logo por defecto en public
     //     return public_path($appearance->logo_path);
     // }
 
+    private function getAuthUserPath()
+    {
+        return auth()->user()->getTenantPath();
+    }
+
     private function getLogoPath($appearance)
     {
-        
-         return Storage::disk('public')->path($appearance->logo_path);
+        return Storage::disk('public')->path($appearance->logo_path);
     }
 
 }

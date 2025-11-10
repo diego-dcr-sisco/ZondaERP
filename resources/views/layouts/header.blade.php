@@ -91,7 +91,7 @@
         <!-- Logo del menú -->
         <a href="{{ !auth()->check() ? '/' : (!auth()->user()->hasRole('Cliente') ? route('loading-erp') : route('client.index', ['section' => 1])) }}"
             class="navbar-brand">
-            <img src="{{ asset('images/header_logo.png') }}" alt="Logo" class="img-fluid">
+            <img src="{{ asset('images/zonda/header_logo.png') }}" alt="Logo" class="img-fluid">
         </a>
 
         <!-- Botón toggle para móviles -->

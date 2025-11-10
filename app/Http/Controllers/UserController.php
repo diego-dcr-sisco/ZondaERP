@@ -40,6 +40,12 @@ class UserController extends Controller
 
 	private $size = 25;
 
+	private function getAuthUserPath()
+    {
+        return auth()->user()->getTenantPath();
+    }
+
+
 	public static function verifyData($user, $hasContract)
 	{
 		$user_data = $user->role_id == 3 ? Technician::where('user_id', $user->id)->first() : Administrative::where('user_id', $user->id)->first();
@@ -62,6 +68,8 @@ class UserController extends Controller
 	private function listDirectoriesRecursively($path)
 	{
 		$directories = [];
+
+		$path = $this->getAuthUserPath() . $path;
 
 		if (Storage::disk('google')->exists($path)) {
 			$subdirectories = Storage::disk('google')->directories($path);
@@ -147,8 +155,9 @@ class UserController extends Controller
 
 	public function createClient(): View
 	{
+		$path = $this->getAuthUserPath() . $this->path;
 		$disk = Storage::disk('google');
-		$local_dirs = $disk->directories($this->path);
+		$local_dirs = $disk->directories($path);
 		sort($local_dirs);
 
 		if (auth()->user()->isSuperAdmin()) {
@@ -435,8 +444,9 @@ class UserController extends Controller
 			);
 		}
 
+		$path = $this->getAuthUserPath() . $this->path;
 		$disk = Storage::disk('google');
-		$local_dirs = $disk->directories($this->path);
+		$local_dirs = $disk->directories($path);
 		sort($local_dirs);
 
 		$clients = $clients_data;
@@ -724,6 +734,7 @@ class UserController extends Controller
 	{
 		try {
 			$path = $request->input('path');
+			$path = $this->getAuthUserPath() . $path;
 			$disk = Storage::disk('google');
 			$dirs = $disk->directories($path);
 			sort($dirs);

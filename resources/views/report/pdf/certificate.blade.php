@@ -89,7 +89,7 @@
         }
 
         .bg-blue {
-            background-color: #192A59; 
+            background-color: #182A41; 
             /* background-color: {{ $primaryColor  }}; */
             font-weight: bold;
             padding-left: 5px;
@@ -101,7 +101,7 @@
             display: inline-block;
             width: 12px;
             height: 12px;
-            background-color: #193f65;
+            background-color: #C2523F;
             vertical-align: middle;
             /* Alinea verticalmente */
         }
@@ -264,7 +264,7 @@
 
 <body>
     <div class="watermark">
-        <img src="file://{{ public_path('images/zonda_watermark.png') }}">
+        <img src="file://{{ public_path('images/zonda/watermark.png') }}">
     </div>
 
     <div class="row">
