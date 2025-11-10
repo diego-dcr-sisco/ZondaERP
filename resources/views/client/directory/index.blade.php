@@ -30,10 +30,11 @@
                     @foreach ($links as $i => $link)
                         <li class="breadcrumb-item">
                             @if (count($links) != $i + 1)
-                                    <a href="{{ route('client.system.index', ['path' => $link['path']]) }}">{{ basename($link['name']) }}</a>
-                                @else
-                                    {{ basename($link['name']) }}
-                                @endif
+                                <a
+                                    href="{{ route('client.system.index', ['path' => $link['path']]) }}">{{ basename($link['name']) }}</a>
+                            @else
+                                {{ basename($link['name']) }}
+                            @endif
                         </li>
                     @endforeach
                 </ol>
@@ -84,9 +85,6 @@
 
                         @foreach ($data['directories'] as $dir)
                             @if (in_array($user->work_department_id, [1, 7]))
-                                @php
-                                    var_dump('hello1');
-                                @endphp
                                 <tr>
                                     <td class="w-100">
                                         <div class="d-flex align-items-center gap-2 w-100">
@@ -135,9 +133,6 @@
                                     </td>
                                 </tr>
                             @else
-                            @php
-                                var_dump('hello2');
-                            @endphp
                                 @if (($user->hasDirectory($dir['path']) || $user->hasPathInside($dir['path'])) && $user->dirManagement($dir['path']))
                                     <tr>
                                         <td class="w-75">
