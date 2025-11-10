@@ -13,9 +13,12 @@ return new class extends Migration
     {
         Schema::create('appearance_settings', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('tenant_id')->nullable()->constrained('tenant')->onDelete('cascade');
             $table->string('primary_color')->default('#64b5f6');
             $table->string('secondary_color')->default('#b0bec5');
             $table->string('logo_path')->nullable();
+            $table->string('watermark_path')->nullable();
+            $table->double('watermark_opacity');
             $table->timestamps();
         });
     }

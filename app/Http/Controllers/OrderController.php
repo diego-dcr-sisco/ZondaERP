@@ -376,31 +376,27 @@ class OrderController extends Controller
 			]);
 		}
 
-		if (auth()->user()->tenant->plan_id != 1) {
-			// Consulta para sedes (manteniendo condiciones originales)
-			$sedesQuery = Customer::where('service_type_id', '!=', 1)
-				->where('general_sedes', '!=', 0)
-				->when($name, fn($q) => $q->where('name', 'like', "%$name%"))
-				->when($phone, fn($q) => $q->where('phone', 'like', "%$phone%"))
-				->when($address, fn($q) => $q->where('address', 'like', "%$address%"));
+		$tenant = auth()->user()->tenant;
+		$log_if = 0;
 
-			// Consulta para clientes principales (manteniendo condiciones originales)
-			$customersQuery = Customer::where('status', '!=', 0)
-				//->where('service_type_id', 1)
-				->when($name, fn($q) => $q->where('name', 'like', "%$name%"))
-				->when($phone, fn($q) => $q->where('phone', 'like', "%$phone%"))
-				->when($address, fn($q) => $q->where('address', 'like', "%$address%"));
+		// Consulta para sedes (manteniendo condiciones originales)
+		$sedesQuery = Customer::where('service_type_id', '!=', 1)
+			->where('general_sedes', '!=', 0)
+			->when($name, fn($q) => $q->where('name', 'like', "%$name%"))
+			->when($phone, fn($q) => $q->where('phone', 'like', "%$phone%"))
+			->when($address, fn($q) => $q->where('address', 'like', "%$address%"));
 
-			$results = $customersQuery->get()->merge($sedesQuery->get());
-		} else {
-			$customersQuery = Customer::where('status', '!=', 0)
-				//->where('service_type_id', 1)
-				->when($name, fn($q) => $q->where('name', 'like', "%$name%"))
-				->when($phone, fn($q) => $q->where('phone', 'like', "%$phone%"))
-				->when($address, fn($q) => $q->where('address', 'like', "%$address%"));
-			
-			$results = $customersQuery->get();
-		}
+		$matrixs = $sedesQuery->get()->pluck('general_sedes');
+
+		// Consulta para clientes principales (manteniendo condiciones originales)
+		$customersQuery = Customer::where('status', '!=', 0)
+			//->where('service_type_id', 1)
+			->when($name, fn($q) => $q->where('name', 'like', "%$name%"))
+			->when($phone, fn($q) => $q->where('phone', 'like', "%$phone%"))
+			->when($address, fn($q) => $q->where('address', 'like', "%$address%"))
+			->whereNotIn('id', $matrixs);
+
+		$results = $customersQuery->get()->merge($sedesQuery->get());
 
 		return response()->json([
 			'customers' => $results->map(function ($customer) {
@@ -411,7 +407,9 @@ class OrderController extends Controller
 					'address' => $customer->address,
 					'type' => $customer->serviceType->name
 				];
-			})
+			}),
+			'log' => $matrixs,
+			'auth' => $tenant,
 		]);
 	}
 
