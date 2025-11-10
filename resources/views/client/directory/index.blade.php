@@ -29,14 +29,11 @@
                 <ol class="breadcrumb">
                     @foreach ($links as $i => $link)
                         <li class="breadcrumb-item">
-                            @if ($i == 0)
-                                <a href="{{ route('client.system.index', ['path' => $link]) }}">Inicio</a>
+                            @if (count($links) != $i + 1)
+                                <a
+                                    href="{{ route('client.system.index', ['path' => $link['path']]) }}">{{ basename($link['name']) }}</a>
                             @else
-                                @if (count($links) != $i + 1)
-                                    <a href="{{ route('client.system.index', ['path' => $link]) }}">{{ basename($link) }}</a>
-                                @else
-                                    {{ basename($link) }}
-                                @endif
+                                {{ basename($link['name']) }}
                             @endif
                         </li>
                     @endforeach
@@ -44,18 +41,20 @@
             </nav>
 
             <div class="mb-3">
-                @if(tenant_can('write_system_client'))
+                @if (tenant_can('write_system_client'))
                     @can('write_system_client')
-                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#directoryModal">
+                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                            data-bs-target="#directoryModal">
                             <i class="bi bi-folder-fill"></i> Crear carpeta
                         </button>
 
-                       {{-- <!--a href="{{ route('client.directory.mip', ['path' => $data['root_path']]) }}" class="btn btn-dark btn-sm"
+                        {{-- <!--a href="{{ route('client.directory.mip', ['path' => $data['root_path']]) }}" class="btn btn-dark btn-sm"
                             onclick="return confirm('{{ __('messages.do_you_want_create_mip') }}')">
                             <i class="bi bi-bar-chart-steps"></i> {{ __('buttons.mip_structure') }}
                         </a--> --}}
 
-                        <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#fileModal">
+                        <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal"
+                            data-bs-target="#fileModal">
                             <i class="bi bi-file-earmark-arrow-up-fill"></i> {{ __('buttons.upload_files') }}
                         </button>
                         <button type="button" class="btn btn-warning btn-sm" onclick="clipboardMode()">
@@ -89,7 +88,7 @@
                                 <tr>
                                     <td class="w-100">
                                         <div class="d-flex align-items-center gap-2 w-100">
-                                            @if(tenant_can('write_system_client'))
+                                            @if (tenant_can('write_system_client'))
                                                 @can('write_system_client')
                                                     <div class="form-check">
                                                         <input class="form-check-input dir-checkbox" type="checkbox"
@@ -105,18 +104,19 @@
                                         </div>
                                     </td>
                                     <td class="text-end">
-                                        @if(tenant_can('write_system_client'))
+                                        @if (tenant_can('write_system_client'))
                                             @can('write_system_client')
                                                 <div class="d-flex gap-1 justify-content-end">
                                                     <a href="{{ route('client.directory.mgmt', ['userId' => auth()->user()->id, 'path' => $dir['path']]) }}"
-                                                        class="btn btn-info btn-sm" data-bs-toggle="tooltip" data-bs-placement="top"
+                                                        class="btn btn-info btn-sm" data-bs-toggle="tooltip"
+                                                        data-bs-placement="top"
                                                         data-bs-title=" {{ $user->dirManagement($dir['path']) ? 'Ocultar carpeta' : 'Mostrar carpeta' }}"
                                                         onclick="return confirm('{{ __('messages.are_you_sure_visible') }}')">
                                                         <i
                                                             class="bi {{ $user->dirManagement($dir['path']) ? 'bi-eye-slash-fill' : 'bi-eye-fill' }}"></i>
                                                     </a>
-                                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal"
-                                                        data-bs-target="#editDirectoryModal"
+                                                    <button type="button" class="btn btn-secondary btn-sm"
+                                                        data-bs-toggle="modal" data-bs-target="#editDirectoryModal"
                                                         onclick="setRoot('{{ $dir['name'] }}', '{{ $dir['path'] }}')"
                                                         data-bs-toggle="tooltip" data-bs-placement="top" title="Editar carpeta">
                                                         <i class="bi bi-pencil-square"></i>
@@ -143,7 +143,7 @@
                                             </a>
                                         </td>
                                         <td class="text-end">
-                                            @if(tenant_can('write_system_client'))
+                                            @if (tenant_can('write_system_client'))
                                                 @can('write_system_client')
                                                     <div class="d-flex gap-1 justify-content-end">
                                                         <a href="{{ route('client.directory.mgmt', ['userId' => auth()->user()->id, 'path' => $dir['path']]) }}"
@@ -157,7 +157,8 @@
                                                         <button type="button" class="btn btn-secondary btn-sm"
                                                             data-bs-toggle="modal" data-bs-target="#editDirectoryModal"
                                                             onclick="setRoot('{{ $dir['name'] }}', '{{ $dir['path'] }}')"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top" title="Editar carpeta">
+                                                            data-bs-toggle="tooltip" data-bs-placement="top"
+                                                            title="Editar carpeta">
                                                             <i class="bi bi-pencil-square"></i>
                                                         </button>
                                                         <a href="{{ route('client.directory.destroy', ['path' => $dir['path']]) }}"
@@ -200,7 +201,7 @@
                                     </a>
                                 </td>
                                 <td class="text-end">
-                                    @if(tenant_can('write_system_client'))
+                                    @if (tenant_can('write_system_client'))
                                         @can('write_system_client')
                                             <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal"
                                                 data-bs-target="#editFileModal"
@@ -210,8 +211,8 @@
                                             </button>
 
                                             <a href="{{ route('client.file.destroy', ['path' => $file['path']]) }}"
-                                                class="btn btn-danger btn-sm" data-bs-toggle="tooltip" data-bs-placement="top"
-                                                data-bs-title="Eliminar archivo"
+                                                class="btn btn-danger btn-sm" data-bs-toggle="tooltip"
+                                                data-bs-placement="top" data-bs-title="Eliminar archivo"
                                                 onclick="return confirm('{{ __('messages.are_you_sure_delete') }}')">
                                                 <i class="bi bi-trash-fill"></i>
                                             </a>

@@ -117,16 +117,32 @@ class ClientController extends Controller
 
     private function getBreadcrumb($path)
     {
-        $breadcrump = [];
-        $aux = '';
-        $parts = explode('/', $path);
-        foreach ($parts as $part) {
-            if (!empty($part)) {
-                $breadcrump[] = $aux . $part;
-                $aux .= ($part . '/');
+        $breadcrumb = [];
+        $auth_root = rtrim($this->getAuthUserPath(), '/'); // 'motaplagas' sin slash
+
+        $parts = explode('/', trim($path, '/'));
+
+        // Combinar las dos primeras partes si coinciden
+        if (count($parts) > 1) {
+            if ($parts[0] === $auth_root && $parts[1] === 'client_system') {
+                $parts[0] = $auth_root . '/client_system';
+                array_splice($parts, 1, 1); // Eliminar el segundo elemento
             }
         }
-        return $breadcrump;
+
+        // Construir el breadcrumb
+        $currentPath = '';
+        foreach ($parts as $i => $part) {
+            if (!empty($part)) {
+                $currentPath .= ($currentPath ? '/' : '') . $part;
+                $breadcrumb[] = [
+                    'name' => $i == 0 ? 'Inicio' : $part,
+                    'path' => $currentPath
+                ];
+            }
+        }
+
+        return $breadcrumb;
     }
 
     private function flattenArray(array $array): array
@@ -200,7 +216,6 @@ class ClientController extends Controller
 
     public function directories(string $path)
     {
-        $path = $this->getAuthUserPath() . $this->path;
         $navigation = [
             'Carpetas' => [
                 'route' => route('client.system.index', ['path' => $path]),
@@ -238,6 +253,7 @@ class ClientController extends Controller
             'mip_directories' => $this->localClientSystemFormat($mip_dirs),
             'mip_files' => $this->localClientSystemFormat($mip_files)
         ];
+
 
         return view('client.directory.index', compact('data', 'links', 'user', 'navigation'));
     }
