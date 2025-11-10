@@ -15,6 +15,7 @@ class DirectoryManagement extends Model
     protected $fillable = [
         'id',
         'user_id',
+        'tenant_id',
         'path',
         'is_visible',
         'created_at',

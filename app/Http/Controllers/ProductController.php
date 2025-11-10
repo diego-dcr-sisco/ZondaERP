@@ -84,7 +84,43 @@ class ProductController extends Controller
         //     'permission' => null
         // ],
     ];
-    
+
+    private function getInternNavigation(ProductCatalog $product)
+    {
+        $navigation = [
+            'Producto' => [
+                'route' => route('product.edit', ['id' => $product->id]),
+                'permission' => null
+            ],
+            'Métodos de aplicación' => [
+                'route' => route('product.edit.appMethods', ['id' => $product->id]),
+                'permission' => null
+            ],
+            'Plagas' => [
+                'route' => route('product.edit.pests', ['id' => $product->id]),
+                'permission' => null
+            ],
+            'Insumos' => [
+                'route' => route('product.edit.inputs', ['id' => $product->id]),
+                'permission' => null
+            ],
+            'Archivos' => [
+                'route' => route('product.edit.files', ['id' => $product->id]),
+                'permission' => null
+            ],
+            'Tratamientos' => [
+                'route' => route('product.edit.treatment', ['id' => $product->id]),
+                'permission' => null
+            ],
+            'Movimientos' => [
+                'route' => route('product.edit.movements', ['id' => $product->id]),
+                'permission' => null
+            ]
+        ];
+
+        return $navigation;
+    }
+
     public function getImage(string $url)
     {
         if (!Storage::disk('public')->exists($url)) {
@@ -243,15 +279,7 @@ class ProductController extends Controller
         $toxics = ToxicityCategories::all();
         $metrics = Metric::all();
 
-        $navigation = [
-            'Producto' => route('product.edit', ['id' => $product->id]),
-            'Métodos de aplicación' => route('product.edit.appMethods', ['id' => $product->id]),
-            'Plagas' => route('product.edit.pests', ['id' => $product->id]),
-            'Insumos' => route('product.edit.inputs', ['id' => $product->id]),
-            'Archivos' => route('product.edit.files', ['id' => $product->id]),
-            'Tratamientos' => route('product.edit.treatment', ['id' => $product->id]),
-            'Movimientos' => route('product.edit.movements', ['id' => $product->id])
-        ];
+        $navigation = $this->getInternNavigation($product);
 
         return view(
             'product.edit.form',
@@ -264,15 +292,7 @@ class ProductController extends Controller
         $product = ProductCatalog::find($id);
         $application_methods = ApplicationMethod::orderBy('name')->get();
 
-        $navigation = [
-            'Producto' => route('product.edit', ['id' => $product->id]),
-            'Métodos de aplicación' => route('product.edit.appMethods', ['id' => $product->id]),
-            'Plagas' => route('product.edit.pests', ['id' => $product->id]),
-            'Insumos' => route('product.edit.inputs', ['id' => $product->id]),
-            'Archivos' => route('product.edit.files', ['id' => $product->id]),
-            'Tratamientos' => route('product.edit.treatment', ['id' => $product->id]),
-            'Movimientos' => route('product.edit.movements', ['id' => $product->id])
-        ];
+        $navigation = $this->getInternNavigation($product);
 
         return view(
             'product.edit.app-methods',
@@ -285,15 +305,7 @@ class ProductController extends Controller
         $product = ProductCatalog::find($id);
         $pest_categories = PestCategory::orderBy('category', 'asc')->get();
 
-        $navigation = [
-            'Producto' => route('product.edit', ['id' => $product->id]),
-            'Métodos de aplicación' => route('product.edit.appMethods', ['id' => $product->id]),
-            'Plagas' => route('product.edit.pests', ['id' => $product->id]),
-            'Insumos' => route('product.edit.inputs', ['id' => $product->id]),
-            'Archivos' => route('product.edit.files', ['id' => $product->id]),
-            'Tratamientos' => route('product.edit.treatment', ['id' => $product->id]),
-            'Movimientos' => route('product.edit.movements', ['id' => $product->id])
-        ];
+        $navigation = $this->getInternNavigation($product);
 
         return view(
             'product.edit.pests',
@@ -307,15 +319,7 @@ class ProductController extends Controller
         $product = ProductCatalog::find($id);
         $filenames = Filenames::where('type', 'product')->orderBy('name')->get();
 
-        $navigation = [
-            'Producto' => route('product.edit', ['id' => $product->id]),
-            'Métodos de aplicación' => route('product.edit.appMethods', ['id' => $product->id]),
-            'Plagas' => route('product.edit.pests', ['id' => $product->id]),
-            'Insumos' => route('product.edit.inputs', ['id' => $product->id]),
-            'Archivos' => route('product.edit.files', ['id' => $product->id]),
-            'Tratamientos' => route('product.edit.treatment', ['id' => $product->id]),
-            'Movimientos' => route('product.edit.movements', ['id' => $product->id])
-        ];
+        $navigation = $this->getInternNavigation($product);
 
         return view(
             'product.edit.files',
@@ -356,15 +360,7 @@ class ProductController extends Controller
             ];
         }
 
-        $navigation = [
-            'Producto' => route('product.edit', ['id' => $product->id]),
-            'Métodos de aplicación' => route('product.edit.appMethods', ['id' => $product->id]),
-            'Plagas' => route('product.edit.pests', ['id' => $product->id]),
-            'Insumos' => route('product.edit.inputs', ['id' => $product->id]),
-            'Archivos' => route('product.edit.files', ['id' => $product->id]),
-            'Tratamientos' => route('product.edit.treatment', ['id' => $product->id]),
-            'Movimientos' => route('product.edit.movements', ['id' => $product->id])
-        ];
+        $navigation = $this->getInternNavigation($product);
 
         return view(
             'product.edit.inputs',
@@ -427,35 +423,14 @@ class ProductController extends Controller
     public function editTreatments(string $id)
     {
         $product = ProductCatalog::find($id);
-
-        $navigation = [
-            'Producto' => route('product.edit', ['id' => $product->id]),
-            'Métodos de aplicación' => route('product.edit.appMethods', ['id' => $product->id]),
-            'Plagas' => route('product.edit.pests', ['id' => $product->id]),
-            'Insumos' => route('product.edit.inputs', ['id' => $product->id]),
-            'Archivos' => route('product.edit.files', ['id' => $product->id]),
-            'Tratamientos' => route('product.edit.treatment', ['id' => $product->id]),
-            'Movimientos' => route('product.edit.movements', ['id' => $product->id])
-        ];
-
-
+        $navigation = $this->getInternNavigation($product);
         return view('product.edit.treatments', compact('navigation'));
     }
 
     public function editMovements(string $id)
     {
         $product = ProductCatalog::find($id);
-
-        $navigation = [
-            'Producto' => route('product.edit', ['id' => $product->id]),
-            'Métodos de aplicación' => route('product.edit.appMethods', ['id' => $product->id]),
-            'Plagas' => route('product.edit.pests', ['id' => $product->id]),
-            'Insumos' => route('product.edit.inputs', ['id' => $product->id]),
-            'Archivos' => route('product.edit.files', ['id' => $product->id]),
-            'Tratamientos' => route('product.edit.treatment', ['id' => $product->id]),
-            'Movimientos' => route('product.edit.movements', ['id' => $product->id])
-        ];
-
+        $navigation = $this->getInternNavigation($product);
         return view('product.edit.treatments', compact('navigation'));
     }
 

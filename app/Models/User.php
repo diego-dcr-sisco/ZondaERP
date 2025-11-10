@@ -164,8 +164,10 @@ class User extends Authenticatable
 
     public function isSuperAdmin(): bool
     {
-        
         return $this->is_superAdmin == 1;
+    }
 
+    public function getTenantPath(){ 
+        return $this->tenant->path ?? '';
     }
 }

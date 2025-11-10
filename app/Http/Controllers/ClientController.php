@@ -27,7 +27,7 @@ class ClientController extends Controller
     private $mip_path = 'mip_directory/';
     private $reports_path = 'backups/reports/';
     private $dir_names = [];
-    private $disk_type = 'public'; // Cambiar a 'google' o 'public' según necesites
+    private $disk_type = 'google'; // Cambiar a 'google' o 'public' según necesites
 
     private $size = 50;
 
@@ -55,6 +55,11 @@ class ClientController extends Controller
     private function getDisk()
     {
         return Storage::disk($this->disk_type);
+    }
+
+    private function getAuthUserPath()
+    {
+        return auth()->user()->getTenantPath();
     }
 
     // Método para listar directorios (compatible con Flysystem v3)
@@ -188,16 +193,17 @@ class ClientController extends Controller
 
     public function index()
     {
-        $path = $this->path;
+        $path = $this->getAuthUserPath() . $this->path;
         $mip_path = $this->mip_path;
         return view('client.index', compact('path', 'mip_path'));
     }
 
     public function directories(string $path)
     {
+        $path = $this->getAuthUserPath() . $this->path;
         $navigation = [
             'Carpetas' => [
-                'route' => route('client.system.index', ['path' => $this->path]),
+                'route' => route('client.system.index', ['path' => $path]),
                 'permission' => null
             ],
             'Reportes' => [
@@ -374,6 +380,7 @@ class ClientController extends Controller
         }
 
         $imageContent = file_get_contents($image->getRealPath());
+        return base64_encode($imageContent);
     }
 
     public function searchReport(Request $request)
@@ -419,7 +426,7 @@ class ClientController extends Controller
             });
         }
 
-        $orders = $tracking_type ? $orders->whereNotNull('contract_id') : $orders->whereNull('contract_id');
+        //$orders = $tracking_type ? $orders->whereNotNull('contract_id') : $orders->whereNull('contract_id');
         $orders = $orders->orderByRaw('signature_name IS NULL DESC')->paginate($this->size);
         return view('client.report.index', compact('user', 'orders', 'business_lines', 'sedes', 'section'));
     }
@@ -559,7 +566,6 @@ class ClientController extends Controller
         $path = $request->input('path');
         $new_path = $root_path . '/' . $request->input('name');
 
-
         if ($disk->directoryExists($path)) {
             $disk->move($path, $new_path);
         }
@@ -598,28 +604,28 @@ class ClientController extends Controller
         }
     }
 
-    public function destroyDirectory(string $path)
-    {
-        try {
-            $disk = $this->getDisk();
-            if ($disk->directoryExists($path)) {
-                // Eliminar recursivamente
-                $contents = $disk->listContents($path, true);
-                foreach ($contents as $item) {
-                    if ($item->isFile()) {
-                        $disk->delete($item->path());
-                    }
-                }
-                // Flysystem v3 no tiene deleteDirectory, así que eliminamos manualmente
-                // Para Google Drive,可能需要 una solución diferente
-                return back();
-            }
+    /* public function destroyDirectory(string $path)
+     {
+         try {
+             $disk = $this->getDisk();
+             if ($disk->directoryExists($path)) {
+                 // Eliminar recursivamente
+                 $contents = $disk->listContents($path, true);
+                 foreach ($contents as $item) {
+                     if ($item->isFile()) {
+                         $disk->delete($item->path());
+                     }
+                 }
+                 // Flysystem v3 no tiene deleteDirectory, así que eliminamos manualmente
+                 // Para Google Drive,可能需要 una solución diferente
+                 return back();
+             }
 
-            return response()->json(['error' => 'Directory not found.'], 404);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'An error occurred while deleting the directory.'], 500);
-        }
-    }
+             return response()->json(['error' => 'Directory not found.'], 404);
+         } catch (\Exception $e) {
+             return response()->json(['error' => 'An error occurred while deleting the directory.'], 500);
+         }
+     }*/
 
     public function destroyFile(string $path)
     {
@@ -814,10 +820,10 @@ class ClientController extends Controller
     // Funciones para los filtros de reportes 
     public function reports(Request $request)
     {
-        
+        $path = $this->getAuthUserPath() . $this->path;
         $navigation = [
             'Carpetas' => [
-                'route' => route('client.system.index', ['path' => $this->path]),
+                'route' => route('client.system.index', ['path' => $path]),
                 'permission' => null
             ],
             'Reportes' => [
@@ -832,13 +838,10 @@ class ClientController extends Controller
             ? $user->customers
             : Customer::where('general_sedes', '!=', 0)->orderBy('name', 'asc')->get();
 
-        $query = Order::query();
+        $query = Order::query()->where('status_id', 5);
 
-        // Validar que se haya seleccionado una sede
-        $filteredParams = $request->except('page');
-
-        // Validar que se haya seleccionado al menos un filtro (excluyendo page)
-        $has_orders = count($filteredParams) > 0;
+        // Verificar si hay filtros aplicados (excluyendo 'page')
+        $has_orders = count($request->except('page')) > 0;
 
         if ($has_orders) {
             if ($request->filled('sede')) {
@@ -874,8 +877,10 @@ class ClientController extends Controller
             }
         }
 
-        $orders = $query->where('status_id', 5)->orderByRaw('signature_name IS NULL DESC')
-            ->orderBy('programmed_date', 'desc')->paginate($this->size)->appends($request->query());
+        $orders = $query->orderByRaw('signature_name IS NULL DESC')
+            ->orderBy('programmed_date', 'desc')
+            ->paginate($this->size)
+            ->withQueryString(); // ← Esto mantiene todos los filtros
 
         return view('client.report.index', compact(
             'user',
@@ -883,9 +888,8 @@ class ClientController extends Controller
             'business_lines',
             'sedes',
             'navigation',
-            'has_orders'
+            'has_orders' // ← Cambiado de has_orders a has_filters
         ));
-
     }
 
     public function listDirs(Request $request)
@@ -1109,94 +1113,24 @@ class ClientController extends Controller
         }
     }
 
-    public function updateDirectoryName(Request $request)
+    public function destroyDirectory(string $path)
     {
         try {
-            $request->validate([
-                'current_path' => 'required|string',
-                'new_name' => 'required|string|max:255|regex:/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s\-_\.]+$/',
-                'is_mip' => 'nullable|boolean'
-            ], [
-                'new_name.regex' => 'El nombre solo puede contener letras, números, espacios, guiones, puntos y guiones bajos.',
-                'new_name.max' => 'El nombre no puede exceder los 255 caracteres.'
-            ]);
-
-            $currentPath = $request->input('current_path');
-            $newName = trim($request->input('new_name'));
-            $isMip = $request->input('is_mip', false);
-
             $disk = $this->getDisk();
+            $decodedPath = urldecode($path);
 
-            // Verificar que la carpeta original existe
-            if (!$disk->directoryExists($currentPath)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'La carpeta no existe o no se puede acceder a ella'
-                ], 404);
+            if (!$disk->directoryExists($decodedPath)) {
+                return response()->json(['error' => 'La carpeta no existe.'], 404);
             }
 
-            // Verificar que el nuevo nombre no sea igual al actual
-            $currentName = basename($currentPath);
-            if ($currentName === $newName) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'El nuevo nombre es igual al nombre actual'
-                ], 422);
-            }
+            // Intentar eliminar recursivamente (Flysystem v3 maneja esto internamente en muchos casos)
+            $disk->deleteDirectory($decodedPath);
 
-            // Construir la nueva ruta
-            $parentPath = dirname($currentPath);
-            $newPath = $parentPath . '/' . $newName;
-
-            // Verificar si ya existe una carpeta con el nuevo nombre
-            if ($disk->directoryExists($newPath)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ya existe una carpeta con ese nombre en esta ubicación'
-                ], 409);
-            }
-
-            // Renombrar la carpeta
-            $renamed = $disk->move($currentPath, $newPath);
-
-            if ($renamed) {
-                // Si es una carpeta MIP, también actualizar las referencias en la base de datos si es necesario
-                if ($isMip) {
-                    $this->updateMipReferences($currentPath, $newPath);
-                }
-
-                // Actualizar permisos si existen en la base de datos
-                $this->updateDirectoryPermissions($currentPath, $newPath);
-
-                Log::info("Carpeta renombrada: {$currentPath} -> {$newPath}");
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Carpeta renombrada exitosamente',
-                    'old_path' => $currentPath,
-                    'new_path' => $newPath,
-                    'new_name' => $newName
-                ]);
-            }
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al renombrar la carpeta'
-            ], 500);
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error de validación',
-                'errors' => $e->validator->errors()
-            ], 422);
+            return back()->with('success', 'Carpeta eliminada exitosamente.');
 
         } catch (\Exception $e) {
-            Log::error('Error renaming directory: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error interno del servidor: ' . $e->getMessage()
-            ], 500);
+            Log::error("Error eliminando carpeta {$path}: " . $e->getMessage());
+            return response()->json(['error' => 'Ocurrió un error al eliminar la carpeta.'], 500);
         }
     }
 

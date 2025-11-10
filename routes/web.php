@@ -487,6 +487,9 @@ Route::prefix('floorplans')
 
         Route::get('/delete/{id}', [FloorplansController::class, 'delete'])->name('delete');
 
+        Route::post('/generate-pdf', [FloorPlansController::class, 'generatePDF'])
+    ->name('generate.pdf');
+
         Route::get('/floorplans/show/{path}', [FloorPlansController::class, 'getImage'])->where('path', '.*')->name('image.show');
         Route::post('/floorplan/{id}/search/version', [FloorPlansController::class, 'searchDevicesbyVersion'])->name('search.device.version');
     });

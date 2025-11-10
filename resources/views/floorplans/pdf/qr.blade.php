@@ -32,6 +32,13 @@
             box-sizing: border-box;
             display: inline-block;
             vertical-align: top;
+            position: relative;
+
+            background-image: url("file://{{ public_path('images/trans_watermark.png') }}");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 50%;
+
         }
 
         .device-card:nth-child(odd) {
@@ -52,8 +59,12 @@
         .device-qr {
             display: table-cell;
             width: 40%;
-            text-align: right;
+            text-align: center;
             vertical-align: middle;
+            border: 2px solid #F5F5F4;
+            padding: 4px;
+            box-sizing: border-box;
+            background: #fff;
         }
 
         .device-header {
@@ -94,7 +105,7 @@
             <div class="card-content">
                 <div class="device-text">
                     <div class="logo">
-                        <img src="file://{{ public_path('images/logo.png') }}" style="width:90%; margin: 0;">
+                        <img src="file://{{ public_path('images/siscoplagas_logo.png') }}" style="width:70%; margin: 0;">
                     </div>
                     <div
                         style="font-size: 15px;

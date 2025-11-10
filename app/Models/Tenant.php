@@ -16,6 +16,7 @@ class Tenant extends Model
         'subscription_start',
         'subscription_end',
         'company_name',
+        'path',
     ];
 
     protected $casts = [
