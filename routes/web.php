@@ -331,8 +331,8 @@ Route::prefix('clients')
     ->name('client.')
     ->group(function () {
 
-        Route::get('/', [ClientController::class, 'index'])->name('index');
-        Route::get('/system/{path}', [ClientController::class, 'directories'])->where('path', '.*')->name('system.index');
+        Route::get('/dashboard', [ClientController::class, 'index'])->name('index');
+        Route::get('/{path}', [ClientController::class, 'directories'])->where('path', '.*')->name('system.index');
         Route::post('/directory/store', [ClientController::class, 'storeDirectory'])->name('directory.store');
         Route::post('/file/store', [ClientController::class, 'storeFile'])->name('file.store');
         Route::post('/directory/update', [ClientController::class, 'updateDirectory'])->name('directory.update');
