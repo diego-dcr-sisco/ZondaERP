@@ -332,6 +332,7 @@ Route::prefix('clients')
     ->group(function () {
 
         Route::get('/dashboard', [ClientController::class, 'index'])->name('index');
+        Route::get('/reports', [ClientController::class, 'reports'])->name('reports');
         Route::get('/{path}', [ClientController::class, 'directories'])->where('path', '.*')->name('system.index');
         Route::post('/directory/store', [ClientController::class, 'storeDirectory'])->name('directory.store');
         Route::post('/file/store', [ClientController::class, 'storeFile'])->name('file.store');
@@ -355,8 +356,7 @@ Route::prefix('clients')
         Route::get('/directory/list', [ClientController::class, 'listDirectories'])->name('directory.list');
 
         // Ruta para el filtrado de reportes
-        Route::get('/reports', [ClientController::class, 'reports'])->name('reports');
-        Route::get('/reports/{section}', [ClientController::class, 'reports'])->name('reports.index');
+        //Route::get('/reports/{section}', [ClientController::class, 'reports'])->name('reports.index');
         Route::get('/file/download/{path}', [ClientController::class, 'downloadFile'])->where('path', '.*')->name('file.download');
     });
 
@@ -488,7 +488,7 @@ Route::prefix('floorplans')
         Route::get('/delete/{id}', [FloorplansController::class, 'delete'])->name('delete');
 
         Route::post('/generate-pdf', [FloorPlansController::class, 'generatePDF'])
-    ->name('generate.pdf');
+            ->name('generate.pdf');
 
         Route::get('/floorplans/show/{path}', [FloorPlansController::class, 'getImage'])->where('path', '.*')->name('image.show');
         Route::post('/floorplan/{id}/search/version', [FloorPlansController::class, 'searchDevicesbyVersion'])->name('search.device.version');
@@ -1057,7 +1057,7 @@ Route::prefix('payrolls')
         Route::get('/edit/{id}', [PayrollController::class, 'edit'])->name('edit');
         Route::put('/update/{id}', [PayrollController::class, 'update'])->name('update');
         Route::delete('/destroy/{id}', [PayrollController::class, 'destroy'])->name('destroy');
-        
+
         Route::get('/stamp/{id}', [PayrollController::class, 'stampPayroll'])->name('stamp');
         Route::get('/download/{id}', [PayrollController::class, 'downloadPayroll'])->name('download');
     });
@@ -1079,6 +1079,6 @@ Route::get('/google-drive/callback', [GoogleDriveController::class, 'handleGoogl
 Route::get('/google-drive/test', [GoogleDriveController::class, 'testConnection'])
     ->name('google.drive.test');
 
-    Route::get('/loading-erp', [PagesController::class, 'loadingERP'])->name('loading-erp');
-    
+Route::get('/loading-erp', [PagesController::class, 'loadingERP'])->name('loading-erp');
+
 require __DIR__ . '/auth.php';

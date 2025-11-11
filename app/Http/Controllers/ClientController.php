@@ -231,6 +231,7 @@ class ClientController extends Controller
         $disk = $this->getDisk();
         $dir_name = $this->mip_path . basename($path);
 
+
         // Usar métodos adaptados para Flysystem v3
         $local_dirs = $this->listDirectories($path);
         $local_files = $this->listFiles($path);

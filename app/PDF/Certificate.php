@@ -144,8 +144,8 @@ class Certificate
     {
         $this->data['order'] = [
             'programmed_date' => Carbon::parse($this->order->programmed_date)->format('d-m-Y'),
-            'start' => Carbon::parse($this->order->programmed_date)->format('d-m-Y') . ' - ' . Carbon::parse($this->order->start_time)->format('H:i'),
-            'end' => Carbon::parse($this->order->completed_date)->format('d-m-Y') . ' - ' . Carbon::parse($this->order->end_time)->format('H:i'),
+            'start' => Carbon::parse($this->order->programmed_date)->format('d/m/Y') . ' - ' . Carbon::parse($this->order->start_time)->format('H:i'),
+            'end' => Carbon::parse($this->order->completed_date)->format('d/m/Y') . ' - ' . Carbon::parse($this->order->end_time)->format('H:i'),
             'notes' => $this->order->notes,
         ];
     }
@@ -153,7 +153,7 @@ class Certificate
     public function branch()
     {
         $this->data['branch'] = [
-            'name' => 'ZONDA',
+            'name' => '',
             'sede' => $this->order->customer->branch->name,
             'address' => $this->order->customer->branch->address,
             'email' => $this->order->customer->branch->email,

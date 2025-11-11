@@ -71,20 +71,32 @@ class ContractController extends Controller
     }
 
     public function __construct()
-	{
-		$this->navigation = [
-			'Ordenes de servicio' => route('order.index'),
-            'Contratos' => route('contract.index'),
-			'Facturas' => route('invoices.index'),
-			'Seguimientos' => route('crm.tracking'),
-		];
-	}
+    {
+        $this->navigation = [
+            'Ordenes de servicio' => [
+                'route' => route('order.index'),
+                'permission' => null
+            ],
+            'Contratos' => [
+                'route' => route('contract.index'),
+                'permission' => null
+            ],
+            'Facturas' => [
+                'route' => route('invoices.index'),
+                'permission' => 'handle_invoice'
+            ],
+            'Seguimientos' => [
+                'route' => route('crm.tracking'),
+                'permission' => null
+            ]
+        ];
+    }
 
     public function index(): View
     {
         $contracts = Contract::orderBy('id', 'desc')->paginate($this->size);
         $technicians = Technician::all();
-        $navigation  = $this->navigation;
+        $navigation = $this->navigation;
 
         return view(
             'contract.index',
