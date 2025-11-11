@@ -18,11 +18,33 @@ use Illuminate\View\View;
 
 class ServiceController extends Controller
 {
-
     private $size = 50;
+    protected $navigation;
+
+    public function __construct()
+    {
+        $this->navigation = [
+			'Ordenes de servicios' => [
+				'route' => route('order.index'),
+				'permission' => null,
+			],
+			'Contratos' => [
+				'route' => route('contract.index'),
+				'permission' => 'handle_contracts',
+			],
+			'Servicios' => [
+				'route' => route('service.index'),
+				'permission' => null,
+			],
+			'CRM' => [
+				'route' => route('crm.agenda'), 
+				'permission' => 'handle_crm'],
+		];
+    }
 
     public function index(): View
     {
+        $navigation = $this->navigation;
         $services = Service::orderBy('id', 'desc')->paginate($this->size);
         $types = ServiceType::all();
         $prefix = ServicePrefix::all();
@@ -38,7 +60,8 @@ class ServiceController extends Controller
             compact(
                 'services',
                 'types',
-                'prefix'
+                'prefix',
+                'navigation'
             )
         );
     }
