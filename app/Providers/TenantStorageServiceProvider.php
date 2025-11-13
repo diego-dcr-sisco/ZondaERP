@@ -14,8 +14,8 @@ class TenantStorageServiceProvider extends ServiceProvider
         Storage::extend('tenant_public', function ($app, $config) {
             $tenantSlug = $this->getTenantSlug();
             
-            $config['root'] = storage_path('app/public/tenants/' . $tenantSlug);
-            $config['url'] = env('APP_URL') . '/storage/tenants/' . $tenantSlug;
+            $config['root'] = storage_path('app/public/' . $tenantSlug);
+            $config['url'] = env('APP_URL') . '/storage/' . $tenantSlug;
             
             return Storage::createLocalDriver($config);
         });

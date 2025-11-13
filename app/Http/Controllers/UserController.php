@@ -603,7 +603,17 @@ class UserController extends Controller
 		$extension = $file->getClientOriginalExtension();
 		$newFileName = $fileName . '_' . time() . '.' . $extension;
 
-		$filePath = $this->files_path . $newFileName;
+		if($request->filename_id == 14 ){
+			$filePath = 'users/images/'. $newFileName;
+		}
+		else{
+			if($request->filename_id == 15){
+			 $filePath = 'users/signatures/'. $newFileName;
+		    }
+			else{
+				 $filePath = $this->files_path. $newFileName;
+			}
+		}
 
 		$disk->put($filePath, file_get_contents($file));
 

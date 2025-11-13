@@ -1091,8 +1091,8 @@ class ReportController extends Controller
         // Agregar los colores y la ruta del logo a los datos que se pasan a la vista
         $data['primaryColor'] = $appearance->primary_color;
         $data['secondaryColor'] = $appearance->secondary_color;
-        $data['logoPath'] = $appearance->logo_path;
-        $data['watermarkPath'] = 'images/zonda/watermark.png';
+        $data['logoPath'] = $appearance->logo_path ?? 'images/zonda/landscape_logo.png';
+        $data['watermarkPath'] =  $appearance->watermark_path ?? 'images/zonda/watermark.png';
         $data['watermarkOpacity'] = $appearance->watermark_opacity ?: 0.1;
 
         //Si son texto plano formatear las notas antes de generar el PDF

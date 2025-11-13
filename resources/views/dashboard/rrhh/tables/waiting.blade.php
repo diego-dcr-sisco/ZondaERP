@@ -2,7 +2,7 @@
     <thead>
         <tr>
             <th scope="col">#</th>
-            <th scope="col">Ver</th>
+            {{-- <th scope="col">Ver</th> --}}
             <th scope="col">Usuario</th>
             {{-- <th scope="col">{{ __('user.data.email') }}</th> --}}
             <th scope="col">{{ __('user.data.phone') }}</th>
@@ -17,10 +17,10 @@
         @foreach ($users as $user)
             <tr>
                 <th scope="row"> {{ $loop->iteration }} </th>
-                <td>
+                {{-- <td>
                     <a href="{{ route('user.show', ['id' => $user->id, 'section' => 1]) }}" class="btn btn-outline-primary btn-sm">
                         <i class="bi bi-eye-fill"></i>
-                    </a>
+                    </a> --}}
                 </td>
                 <td> 
                     {{ $user->name }}

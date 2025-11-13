@@ -36,6 +36,37 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Sección de Marca de Agua -->
+                <div class="settings-card">
+                    <div class="settings-card-header">
+                        <i class="bi bi-droplet me-2"></i>Marca de Agua del certificado
+                    </div>
+                    <div class="settings-card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <p>Suba una imagen para utilizar como marca de agua en el certificado. Formato recomendado: PNG transparente. Tamaño máximo: 2MB.</p>
+                                
+                                <label for="watermark-upload" class="custom-file-upload">
+                                    <i class="bi bi-cloud-upload me-2"></i>Seleccionar Marca de Agua
+                                </label>
+                                <input id="watermark-upload" name="watermark" type="file" accept="image/*"/>
+                                <div class="mt-3">
+                                    <label class="form-label">Opacidad de la marca de agua:</label>
+                                    <input type="range" class="form-range" id="watermark-opacity" name="watermark_opacity" 
+                                           min="0" max="100" value="{{( $appearance->watermark_opacity ?? 0.1)*100 }}">
+                                    <output for="watermark-opacity" id="opacity-value">{{( $appearance->watermark_opacity ?? 0.1)*100 }}%</output>
+                                </div>
+                            </div>
+                            <div class="col-md-6 text-center">
+                                <div class="watermark-preview">
+                                    <img src="data:image/png;base64,{{ base64_encode(Storage::disk('public')->get($appearance->watermark_path)) }}" alt="Vista previa de la marca de agua" id="watermark-preview-img" style="opacity: {{ ($appearance->watermark_opacity ?? 10)  }};">
+                                </div>
+                                <small class="text-muted">Vista previa de la marca de agua actual</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 
                 <!-- Sección de Colores -->
                 <div class="settings-card">
@@ -47,8 +78,8 @@
                             <label class="form-label">Color Principal</label>
                             <div>
                                 @php
-                                    $primaryColor = $appearance->primary_color ?? '#64b5f6';
-                                    $colorOptions = ['#64b5f6', '#4e73df', '#36b9cc', '#1cc88a', '#f6c23e', '#e74a3b', '#6f42c1'];
+                                    $primaryColor = $appearance->primary_color ?? '#182A41';
+                                    $colorOptions = ['#182A41', '#4e73df', '#36b9cc', '#1cc88a', '#f6c23e', '#e74a3b', '#6f42c1'];
                                 @endphp
                                 
                                 @foreach ($colorOptions as $color)
@@ -93,19 +124,20 @@
                 <div class="preview-section">
                     <h5 class="mb-3"><i class="bi bi-eye me-2"></i>Vista Previa</h5>
                     <div class="preview-navbar" id="preview-navbar">
-                        <span class="fw-bold" style="color:black ">SERVICIOS</span>
+                        <span class="fw-bold" style="color:white ">SERVICIOS</span>
                     </div>
                     <div>
                         <span class="fw-ligth">Lorem ipsum dolor sit amet consectetur, adipisicing elit. Numquam magnam ipsa nulla dolores! Libero, numquam ex eveniet optio vero inventore unde nihil odio tempora fuga quae, maiores, deleniti expedita alias!</span>
                     </div>
                     <div class="p-3 border rounded">
                         <p>Esta es una vista previa de cómo se verán los cambios en el certificado.</p>
-                        <button type="button" class="btn btn-primary-preview fw-bold">Secciones</button>
+                        <button type="button"  style="color:white" class="btn btn-primary-preview fw-bold">Secciones</button>
                         <button type="button" class="btn btn-secondary-preview ms-2 fw-bold">Dispositivos</button>
                     </div>
                 </div>
                 
                 <!-- Botones de acción -->
+                 
                 <div class="d-flex justify-content-end mt-4">
                     <button type="button" class="btn btn-danger" onclick="resetForm()">Cancelar</button>
                     <button type="submit" class="btn btn-primary btn-sm ms-2">Guardar Cambios</button>
@@ -254,6 +286,27 @@
                 }
             });
             
+            // Previsualización de imagen seleccionada (marca de agua)
+            document.getElementById('watermark-upload').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        document.getElementById('watermark-preview-img').src = e.target.result;
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // Controlador de opacidad
+            const opacitySlider = document.getElementById('watermark-opacity');
+            const opacityOutput = document.getElementById('opacity-value');
+            
+            opacitySlider.addEventListener('input', function() {
+                const opacityValue = this.value;
+                opacityOutput.textContent = opacityValue + '%';
+                document.getElementById('watermark-preview-img').style.opacity = opacityValue / 100;
+            });
             
             // Selección de colores predefinidos
             document.querySelectorAll('.color-option').forEach(option => {

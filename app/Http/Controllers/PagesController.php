@@ -417,7 +417,7 @@ class PagesController extends Controller
         
         $navigation = [
             'Crear usuario' => [
-                'route' => '/users/create',
+                'route' => '/users/create/client',
                 'permission' => null
             ],
             'Usuarios pendientes' => [

@@ -89,8 +89,7 @@
         }
 
         .bg-blue {
-            background-color: #182A41; 
-            /* background-color: {{ $primaryColor  }}; */
+             background-color: {{ $primaryColor  }};
             font-weight: bold;
             padding-left: 5px;
             width: 100%;
@@ -123,7 +122,6 @@
         }
 
         .product-table thead tr {
-            /* background-color: #b0bec5; */
             background-color: {{ $secondaryColor }};
             text-align: left;
         }
@@ -264,7 +262,11 @@
 
 <body>
     <div class="watermark">
+        @if($watermarkPath)
+        <img src="file://{{ Storage::disk('public')->path($watermarkPath) }}">
+        @else
         <img src="file://{{ public_path('images/zonda/watermark.png') }}">
+        @endif
     </div>
 
     <div class="row">
@@ -272,8 +274,12 @@
             <h1 style="font-size: 22px; margin: 0;">{{ $title }}</h1>
         </div>
         <div class="logo">
-            <img src="file://{{ $logoPath }}" style="width: 300px; margin: 0;">
-        </div>
+        @if($logoPath)
+            <img src="file://{{ Storage::disk('public')->path($logoPath) }}" style="width: 300px; margin: 0;">
+        @else
+            <img src="file://{{ public_path('images/zonda/landscape_logo.png') }}" style="width: 300px; margin: 0;">
+        @endif
+    </div>
     </div>
 
     <div class="row">

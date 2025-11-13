@@ -39,7 +39,7 @@
                 <div class="row mb-3 justify-content-between">
                     <!-- Crear usuario -->
                     <div class="col-auto">
-                        <a href="{{ route('user.create', ['type' => 1]) }}" class="btn btn-primary">
+                        <a href="{{ route('user.create.client' )}}" class="btn btn-primary">
                             <i class="bi bi-person-plus-fill"></i> Crear nuevo usuario
                         </a>
                     </div>

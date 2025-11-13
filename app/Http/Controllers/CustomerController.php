@@ -1311,7 +1311,7 @@ class CustomerController extends Controller
             $customer_file = CustomerFile::find($id);
 
             if (Storage::disk('public')->exists($customer_file->path)) {
-                return response()->download(storage_path('app/public/' . $customer_file->path));
+                 return response()->download(Storage::disk('public')->path($customer_file->path));
             }
             return response()->json(['error' => 'File not found.'], 404);
         } catch (\Exception $e) {
