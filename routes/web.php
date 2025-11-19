@@ -332,8 +332,7 @@ Route::prefix('clients')
     ->group(function () {
 
         Route::get('/dashboard', [ClientController::class, 'index'])->name('index');
-        Route::get('/reports', [ClientController::class, 'reports'])->name('reports');
-        Route::get('/{path}', [ClientController::class, 'directories'])->where('path', '.*')->name('system.index');
+        Route::get('/reports', [ClientController::class, 'reports'])->name('reports'); 
         Route::post('/directory/store', [ClientController::class, 'storeDirectory'])->name('directory.store');
         Route::post('/file/store', [ClientController::class, 'storeFile'])->name('file.store');
         Route::post('/directory/update', [ClientController::class, 'updateDirectory'])->name('directory.update');
@@ -352,12 +351,13 @@ Route::prefix('clients')
         Route::post('/directory/search', [ClientController::class, 'searchDirectories'])->name('directory.search');
         Route::post('/directory/copy', [ClientController::class, 'copyDirectories'])->name('directory.copy');
         Route::post('/directory/move', [ClientController::class, 'moveDirectories'])->name('directory.move');
-        //Ruta de prueba para manejar el arbol de directorios
-        Route::get('/directory/list', [ClientController::class, 'listDirectories'])->name('directory.list');
+        //Ruta para manejar el arbol de directorios 
+        Route::post('/directory/tree', [ClientController::class, 'directoryTree'])->name('directory.tree');
 
         // Ruta para el filtrado de reportes
         //Route::get('/reports/{section}', [ClientController::class, 'reports'])->name('reports.index');
         Route::get('/file/download/{path}', [ClientController::class, 'downloadFile'])->where('path', '.*')->name('file.download');
+        Route::get('/{path}', [ClientController::class, 'directories'])->where('path', '.*')->name('system.index');
     });
 
 

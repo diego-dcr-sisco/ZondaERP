@@ -194,11 +194,21 @@
                         @foreach ($data['files'] as $file)
                             <tr>
                                 <td class="w-75">
-                                    <a href="{{ route('client.file.download', ['path' => $file['path']]) }}"
-                                        class="text-decoration-none d-flex align-items-center gap-2" target="_blank">
-                                        <i class="bi bi-file-pdf-fill text-danger"></i>
-                                        <span>{{ $file['name'] }}</span>
-                                    </a>
+                                    <div class="d-flex align-items-center gap-2 w-100">
+                                        @if (tenant_can('write_system_client'))
+                                            @can('write_system_client')
+                                                <div class="form-check">
+                                                    <input class="form-check-input file-checkbox" type="checkbox"
+                                                        value="{{ $file['path'] }}">
+                                                </div>
+                                            @endcan
+                                        @endif
+                                        <a href="{{ route('client.file.download', ['path' => $file['path']]) }}"
+                                            class="text-decoration-none d-flex align-items-center gap-2 w-100 " target="_blank">
+                                            <i class="bi bi-file-pdf-fill text-danger"></i>
+                                            <span>{{ $file['name'] }}</span>
+                                        </a>
+                                    </div>
                                 </td>
                                 <td class="text-end">
                                     @if (tenant_can('write_system_client'))

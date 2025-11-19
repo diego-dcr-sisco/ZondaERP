@@ -690,74 +690,155 @@ class ClientController extends Controller
     {
         $request->validate([
             'path' => 'required|string',
-            'directories' => 'required|json'
+            'directories' => 'required|json',
+            'file_paths' => 'nullable|json'
         ]);
 
-        $disk = Storage::disk('public');
-        $destination = Str::finish($request->path, '/');
-        $directories = json_decode($request->directories, true);
+        $disk = Storage::disk('google');
         $results = [];
         $allSuccess = true;
 
-        foreach ($directories as $directory) {
-            $source = Str::finish($directory, '/');
-            $dirname = basename(rtrim($source, '/'));
-            $target = $destination . $dirname;
+        $basePath = $this->getAuthUserPath() . 'client_system/';
+        
+        $destination = $request->path;
+        if (!str_starts_with($destination, $basePath)) {
+            $destination = $basePath . ltrim($destination, '/');
+        }
+        $destination = Str::finish($destination, '/');
 
-            try {
-                // Verificaciones iniciales
-                if (!$disk->exists($source)) {
-                    throw new \Exception('El directorio origen no existe');
+        // Procesar directorios
+        $directories = json_decode($request->directories, true) ?? [];
+
+        if (!empty($directories)) {
+            foreach ($directories as $directory) {
+                $source = $directory;
+                if (!str_starts_with($source, $basePath)) {
+                    $source = $basePath . ltrim($source, '/');
                 }
-                if ($disk->exists($target)) {
-                    throw new \Exception('El directorio destino ya existe');
+                $source = Str::finish($source, '/');
+                
+                $dirname = basename(rtrim($source, '/'));
+                $target = $destination . $dirname . '/';
+
+                try {
+                    // Verificar si el origen existe
+                    if (!$disk->exists($source)) {
+                        throw new \Exception('El directorio origen no existe');
+                    }
+
+                    if (!$disk->directoryExists($source)) {
+                        throw new \Exception('El origen no es un directorio');
+                    }
+
+                    if ($disk->exists($target)) {
+                        throw new \Exception('Ya existe un directorio con el nombre "' . $dirname . '" en la carpeta destino');
+                    }
+
+                    // Crear directorio principal
+                    $disk->makeDirectory($target);
+
+                    // Copiar contenido recursivo
+                    $contents = $disk->listContents($source, true);
+                    
+                    foreach ($contents as $item) {
+                        $relativePath = substr($item->path(), strlen($source));
+                        $newItemPath = $target . $relativePath;
+
+                        if ($item->isDir()) {
+                            if (!$disk->directoryExists($newItemPath)) {
+                                $disk->makeDirectory($newItemPath);
+                            }
+                        } else {
+                            $parentDir = dirname($newItemPath);
+                            if (!$disk->exists($parentDir)) {
+                                $disk->makeDirectory($parentDir);
+                            }
+                            
+                            $disk->copy($item->path(), $newItemPath);
+                        }
+                    }
+
+
+                    $results[$directory] = [
+                        'success' => true,
+                        'message' => 'Directorio copiado correctamente',
+                        'new_path' => $target
+                    ];
+
+                } catch (\Exception $e) {
+                    if ($disk->exists($target)) {
+                        $disk->deleteDirectory($target);
+                    }
+
+                    $results[$directory] = [
+                        'success' => false,
+                        'message' => $e->getMessage()
+                    ];
+                    $allSuccess = false;
+                    \Log::error("Error copiando directorio {$source}: " . $e->getMessage());
                 }
+            }
+        } else {
+            \Log::info(" No hay directorios para copiar");
+        }
 
-                // Crear directorio principal
-                $disk->makeDirectory($target);
+        // Procesar archivos
+        if ($request->has('file_paths') && !empty($request->file_paths)) {
+            $files = json_decode($request->file_paths, true);
+            
+            // Verificar que el JSON no sea un array vacío
+            if (!empty($files)) {
 
-                // Copiar estructura completa
-                $allContents = $disk->allDirectories($source);
-                $allContents = array_merge($allContents, $disk->allFiles($source));
+                foreach ($files as $file) {
+                    $source = $file;
+                    if (!str_starts_with($source, $basePath)) {
+                        $source = $basePath . ltrim($source, '/');
+                    }
+                    
+                    $filename = basename($source);
+                    $target = $destination . $filename;
 
-                foreach ($allContents as $item) {
-                    $relativePath = Str::after($item, $source);
-                    $newItemPath = $target . '/' . $relativePath;
-
-                    // Crear subdirectorios primero
-                    if ($disk->directoryExists($item)) {
-                        if (!$disk->makeDirectory($newItemPath)) {
-                            throw new \Exception("Fallo al crear subdirectorio: {$newItemPath}");
+                    try {
+                        if (!$disk->fileExists($source)) {
+                            throw new \Exception('El archivo origen no existe');
                         }
-                    } else {
-                        // Para archivos, asegurar que existe su directorio padre
-                        $parentDir = dirname($newItemPath);
-                        if (!$disk->exists($parentDir)) {
-                            $disk->makeDirectory($parentDir);
+
+                        if ($disk->fileExists($target)) {
+                            throw new \Exception('Ya existe un archivo con el nombre "' . $filename . '" en la carpeta destino');
                         }
-                        $disk->copy($item, $newItemPath);
+
+                        $disk->copy($source, $target);
+
+                        $results[$file] = [
+                            'success' => true,
+                            'message' => 'Archivo copiado correctamente',
+                            'new_path' => $target
+                        ];
+
+                    } catch (\Exception $e) {
+                        if ($disk->fileExists($target)) {
+                            $disk->delete($target);
+                        }
+
+                        $results[$file] = [
+                            'success' => false,
+                            'message' => $e->getMessage()
+                        ];
+                        $allSuccess = false;
+                        \Log::error(" Error copiando archivo {$source}: " . $e->getMessage());
                     }
                 }
-
-                $results[$source] = [
-                    'success' => true,
-                    'message' => 'Directorio y subdirectorios copiados correctamente',
-                    'new_path' => $target
-                ];
-
-            } catch (\Exception $e) {
-                // Limpieza en caso de error
-                if ($disk->exists($target)) {
-                    $disk->deleteDirectory($target);
-                }
-
-                $results[$source] = [
-                    'success' => false,
-                    'message' => $e->getMessage()
-                ];
-                $allSuccess = false;
-                \Log::error("Error copiando {$source}: " . $e->getMessage());
+            } else {
+                \Log::info(" Array de archivos está vacío");
             }
+        } else {
+            \Log::info(" No hay archivos para copiar");
+        }
+
+        // No se procesaron elementos
+        if (empty($results)) {
+            $allSuccess = true;
+            \Log::info(" No se procesaron elementos");
         }
 
         return response()->json([
@@ -770,26 +851,58 @@ class ClientController extends Controller
     {
         $request->validate([
             'path' => 'required|string',
-            'directories' => 'required|json'
+            'directories' => 'required|json',
+            'file_paths' => 'nullable|json' 
         ]);
 
-        $disk = Storage::disk('public');
-        $destination = Str::finish($request->path, '/');
-        $directories = json_decode($request->directories, true);
+        $disk = Storage::disk('google');
         $results = [];
         $allSuccess = true;
 
+        $basePath = $this->getAuthUserPath() . 'client_system/';
+        $destination = $request->path;
+        
+        if (!str_starts_with($destination, $basePath)) {
+            $destination = $basePath . ltrim($destination, '/');
+        }
+        $destination = Str::finish($destination, '/');
+
+        $directories = json_decode($request->directories, true);
+
         foreach ($directories as $directory) {
-            $source = Str::finish($directory, '/');
+            $source = $directory;
+            
+            if (!str_starts_with($source, $basePath)) {
+                $source = $basePath . ltrim($source, '/');
+            }
+            $source = Str::finish($source, '/');
+            
             $dirname = basename(rtrim($source, '/'));
-            $target = $destination . $dirname;
+            
+            $target = $destination . $dirname . '/';
 
             try {
                 // Verificar si el origen existe
                 if (!$disk->exists($source)) {
-                    $results[$source] = [
+                    // Intentar con path relativo
+                    $alternativeSource = $basePath . ltrim($directory, '/');
+                    if ($disk->exists($alternativeSource)) {
+                        $source = $alternativeSource;
+                    } else {
+                        $results[$directory] = [
+                            'success' => false,
+                            'message' => 'El directorio origen no existe'
+                        ];
+                        $allSuccess = false;
+                        continue;
+                    }
+                }
+
+                // Verificar si es un directorio
+                if (!$disk->directoryExists($source)) {
+                    $results[$directory] = [
                         'success' => false,
-                        'message' => 'El directorio origen no existe'
+                        'message' => 'El origen no es un directorio'
                     ];
                     $allSuccess = false;
                     continue;
@@ -797,7 +910,7 @@ class ClientController extends Controller
 
                 // Verificar si el destino existe
                 if ($disk->exists($target)) {
-                    $results[$source] = [
+                    $results[$directory] = [
                         'success' => false,
                         'message' => 'El directorio destino ya existe'
                     ];
@@ -806,25 +919,75 @@ class ClientController extends Controller
                 }
 
                 // Mover el directorio
-                $moved = $disk->move($source, $target);
+                $disk->move($source, $target);
 
-                if ($moved) {
-                    $results[$source] = [
-                        'success' => true,
-                        'message' => 'Directorio movido correctamente',
-                        'new_path' => $target
-                    ];
-                } else {
-                    throw new \Exception("Error al mover el directorio");
-                }
+                $results[$directory] = [
+                    'success' => true,
+                    'message' => 'Directorio movido correctamente',
+                    'new_path' => $target
+                ];
 
             } catch (\Exception $e) {
-                $results[$source] = [
+                \Log::error(" Error moviendo directorio {$source}: " . $e->getMessage());
+                $results[$directory] = [
                     'success' => false,
-                    'message' => $e->getMessage()
+                    'message' => 'Error al mover el directorio: ' . $e->getMessage()
                 ];
                 $allSuccess = false;
-                \Log::error("Error moving directory {$source}: " . $e->getMessage());
+            }
+        }
+
+        // Mover archivos
+        if ($request->has('file_paths') && !empty($request->file_paths)) {
+            $files = json_decode($request->file_paths, true);
+
+            foreach ($files as $file) {
+                $source = $file;
+                if (!str_starts_with($source, $basePath)) {
+                    $source = $basePath . ltrim($source, '/');
+                }
+                
+                $filename = basename($source);
+                $target = $destination . $filename;
+
+                try {
+                    // Verificar si el archivo origen existe
+                    if (!$disk->fileExists($source)) {
+                        $results[$file] = [
+                            'success' => false,
+                            'message' => 'El archivo origen no existe'
+                        ];
+                        $allSuccess = false;
+                        continue;
+                    }
+
+                    // Verificar si el archivo ya existe en el destino
+                    if ($disk->fileExists($target)) {
+                        $results[$file] = [
+                            'success' => false,
+                            'message' => 'Ya existe un archivo con ese nombre'
+                        ];
+                        $allSuccess = false;
+                        continue;
+                    }
+
+                    
+                    $disk->move($source, $target);
+
+                    $results[$file] = [
+                        'success' => true,
+                        'message' => 'Archivo movido correctamente',
+                        'new_path' => $target
+                    ];
+
+                } catch (\Exception $e) {
+                    \Log::error(" Error moviendo archivo {$source}: " . $e->getMessage());
+                    $results[$file] = [
+                        'success' => false,
+                        'message' => 'Error al mover el archivo: ' . $e->getMessage()
+                    ];
+                    $allSuccess = false;
+                }
             }
         }
 
@@ -1151,4 +1314,52 @@ class ClientController extends Controller
         }
     }
 
+    public function directoryTree(Request $request)
+    {
+        
+        try {
+            $inputPath = trim($request->input('path', ''));
+            
+            // Para Google Drive path completo desde la raíz del usuario
+            $basePath = $this->getAuthUserPath() . 'client_system/';
+            
+            // Construir el path completo
+            if (empty($inputPath)) {
+                $searchPath = $basePath;
+            } else {
+                $searchPath = $basePath . ltrim($inputPath, '/');
+            }
+            
+            $disk = $this->getDisk();
+            
+            if (!$disk->directoryExists($searchPath)) {
+                return response()->json(['error' => 'La ruta seleccionada no es un directorio'], 400);
+            }
+            
+            // Verificar si el path existe 
+            if (!$disk->exists($searchPath)) {
+                return response()->json(['error' => 'Directorio no encontrado '], 404);
+            }
+            
+            // Obtener directorios
+            $directoryPaths = $this->listDirectories($searchPath);
+            
+            // Formatear la respuesta
+            $directories = array_map(function($dirPath) use ($basePath) {
+                // Extraer el path relativo desde la base del usuario
+                $relativePath = str_replace($basePath, '', $dirPath);
+                $relativePath = rtrim($relativePath, '/');
+                
+                return [
+                    'path' => $relativePath,
+                    'name' => basename($dirPath)
+                ];
+            }, $directoryPaths);
+
+            return response()->json($directories);
+            
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Error interno del servidor: ' . $e->getMessage()], 500);
+        }
+    }
 }
