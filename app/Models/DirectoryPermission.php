@@ -4,17 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Tenancy\TenantScoped;
 
 class DirectoryPermission extends Model
 {
-    use HasFactory, TenantScoped;
+    use HasFactory;
 
     protected $table = 'directory_permissions';
 
     protected $fillable = [
         'id',
-        'tenant_id',
         'user_id',
         'path',
         'created_at',

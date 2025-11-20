@@ -759,14 +759,14 @@ class UserController extends Controller
 		}
 	}
 
-	public function searchSedes(Request $request)
+	/*public function searchSedes(Request $request)
 	{
 		$sedes_data = [];
 		$searchTerm = $request->search;
 
 		$customers = Customer::where('name', 'LIKE', "%{$searchTerm}%")
 			->where(function ($query) {
-				$query->where('service_type_id', 1)
+				$query->where('service_type_id', '!=',  1)
 					->orWhere('general_sedes', '!=', 0);
 			})
 			->get();
@@ -784,6 +784,63 @@ class UserController extends Controller
 		}
 
 		$data = [
+			'sedes' => $sedes_data,
+		];
+		return response()->json($data);
+	}*/
+
+	public function searchSedes(Request $request)
+{
+    $searchTerm = $request->search;
+
+    // sedes
+    $sedesQuery = Customer::where('name', 'LIKE', "%{$searchTerm}%")
+        ->where('service_type_id', '!=', 1)
+        ->where('general_sedes', '!=', 0);   
+
+    $sedes = $sedesQuery->get();
+
+    // clientes con sedes
+    $clientesConSedes = $sedes->pluck('general_sedes')->unique();
+
+    // clientes sin sedes
+    $clientesSinSedesQuery = Customer::where('name', 'LIKE', "%{$searchTerm}%")
+        ->where('service_type_id', '!=', 1)
+        ->where(function($query) {
+            $query->where('general_sedes', 0) // no son sedes
+                  ->orWhereNull('general_sedes');
+        })
+        ->whereNotIn('id', $clientesConSedes); // exlcuir clientes que tienen sedes
+
+    $clientesSinSedes = $clientesSinSedesQuery->get();
+
+    
+    $resultados = $clientesSinSedes->merge($sedes);
+
+    $sedes_data = [];
+    foreach ($resultados as $customer) {
+        // Si es sede, mostrar su cliente principal
+        $matrixId = ($customer->general_sedes && $customer->general_sedes != 0) 
+            ? $customer->general_sedes 
+            : null;
+            
+        $matrixName = $matrixId 
+            ? (Customer::find($matrixId)->name ?? '-')
+            : '-';
+
+        $sedes_data[] = [
+            'id' => $customer->id,
+            'name' => $customer->name,
+            'matrix' => [
+                'id' => $matrixId,
+                'name' => $matrixName
+            ],
+            'is_checked' => false,
+            'es_sede' => $matrixId != null,
+        ];
+    }
+
+    $data = [
 			'sedes' => $sedes_data,
 		];
 		return response()->json($data);
