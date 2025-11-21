@@ -759,36 +759,6 @@ class UserController extends Controller
 		}
 	}
 
-	/*public function searchSedes(Request $request)
-	{
-		$sedes_data = [];
-		$searchTerm = $request->search;
-
-		$customers = Customer::where('name', 'LIKE', "%{$searchTerm}%")
-			->where(function ($query) {
-				$query->where('service_type_id', '!=',  1)
-					->orWhere('general_sedes', '!=', 0);
-			})
-			->get();
-
-		foreach ($customers as $customer) {
-			$sedes_data[] = [
-				'id' => $customer->id,
-				'name' => $customer->name,
-				'matrix' => [
-					'id' => $customer->matrix->id ?? null,
-					'name' => $customer->matrix->name ?? '-'
-				],
-				'is_checked' => false,
-			];
-		}
-
-		$data = [
-			'sedes' => $sedes_data,
-		];
-		return response()->json($data);
-	}*/
-
 	public function searchSedes(Request $request)
 {
     $searchTerm = $request->search;
