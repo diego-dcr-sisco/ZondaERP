@@ -805,17 +805,13 @@ class UserController extends Controller
 
     // clientes sin sedes
     $clientesSinSedesQuery = Customer::where('name', 'LIKE', "%{$searchTerm}%")
-        ->where('service_type_id', '!=', 1)
         ->where(function($query) {
             $query->where('general_sedes', 0) // no son sedes
                   ->orWhereNull('general_sedes');
         })
         ->whereNotIn('id', $clientesConSedes); // exlcuir clientes que tienen sedes
-
-    $clientesSinSedes = $clientesSinSedesQuery->get();
-
     
-    $resultados = $clientesSinSedes->merge($sedes);
+    $resultados =  $clientesSinSedesQuery->get()->merge($sedes);
 
     $sedes_data = [];
     foreach ($resultados as $customer) {
