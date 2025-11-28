@@ -15,7 +15,7 @@ use App\Models\Lot;
 use App\Models\User;
 use App\Models\WarehouseMovement;
 use App\Models\MovementProduct;
-
+use App\Models\AppearanceSetting;
 
 use App\Models\WarehouseProduct;
 use App\Models\WarehouseOrder;
@@ -1520,11 +1520,14 @@ class StockController extends Controller
                 $technian_name = $movement->destinationWarehouse->technician ? $movement->destinationWarehouse->technician->user->name : 'No asignado';
             }
 
+            $appearance = AppearanceSetting::first();
+
             $data = [
                 'title' => 'Constancia de Movimiento',
+                'logo_path' => $appearance->logo_path,
                 'date' => $movement->date,
                 'time' => $movement->time,
-                'origin' => $movement->warehouse->name,
+                'origin' => $movement->warehouse->name ?? '-',
                 'destination' => $movement->destinationWarehouse ? $movement->destinationWarehouse->name : 'No Aplica',
                 'movement_type' => $movement->movement->name,
                 'folio' => $movement->id,
@@ -1541,7 +1544,7 @@ class StockController extends Controller
                     ];
                 })->toArray(),
             ];
-
+            //dd($data);
             $pdf = Pdf::loadView('stock.movements.show.voucher-pdf', $data);
             return $pdf->stream('movimiento_' . $movement->id . '.pdf');
 

@@ -25,6 +25,7 @@ use App\Models\FloorplanVersion;
 use App\Models\OrderInsidences;
 use App\Models\Branch;
 use App\Models\OrderName;
+use App\Models\AppearanceSetting;
 
 use Illuminate\Support\Str;
 use Carbon\Carbon;
@@ -791,6 +792,8 @@ class FloorPlansController extends Controller
         }
 
         $data['devices'] = $devices_data;
+        $appearance = AppearanceSetting::first();
+        $data['appearance'] = $appearance;
 
         $pdf = Pdf::loadView('floorplans.pdf.qr', $data);
         $pdf_name = 'QR_' . $floorplan->filename . '_' . $floorplan->customer->name;

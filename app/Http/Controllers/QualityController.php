@@ -1244,7 +1244,7 @@ class QualityController extends Controller
         if ($firstDayOfWeek->lte($lastDayOfWeek)) {
             $currentDayOfWeek = $firstDayOfWeek->copy();
             while ($currentDayOfWeek->lte($lastDayOfWeek)) {
-                $weekKeys[] = $currentDayOfWeek->formatLocalized('%d-%b-%y');
+                $weekKeys[] = $currentDayOfWeek->format('d-M-y');
                 $currentDayOfWeek->addWeek();
             }
         }
@@ -1311,7 +1311,7 @@ class QualityController extends Controller
             if ($firstDayOfWeek->lte($lastDayOfWeek)) {
                 $currentDayOfWeek = $firstDayOfWeek->copy();
                 while ($currentDayOfWeek->lte($lastDayOfWeek)) {
-                    $timeKeys[] = $currentDayOfWeek->formatLocalized('%d-%b-%y');
+                    $timeKeys[] = $currentDayOfWeek->format('d-M-y');
                     $currentDayOfWeek->addWeek();
                 }
             }

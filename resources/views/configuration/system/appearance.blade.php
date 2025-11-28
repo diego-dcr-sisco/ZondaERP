@@ -28,11 +28,20 @@
                                 <input id="logo-upload" name="logo" type="file" accept="image/*"/>
                             </div>
                             <div class="col-md-6 text-center">
-                                <div class="logo-preview">
+                            <div class="logo-preview">
+                                @if($appearance && $appearance->logo_path && $appearance->logo_path != 'images/zonda/landscape_logo.png')
                                     <img src="data:image/png;base64,{{ base64_encode(Storage::disk('public')->get($appearance->logo_path)) }}" alt="Vista previa del logo" id="logo-preview-img">
-                                </div>
-                                <small class="text-muted">Vista previa del logo actual</small>
+                                @elseif($appearance && $appearance->logo_path && $appearance->logo_path == 'images/zonda/landscape_logo.png')
+                                    <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/zonda/landscape_logo.png'))) }}" alt="Vista previa del logo genérico" id="logo-preview-img">
+                                @else
+                                    <div class="logo-placeholder">
+                                        <i class="bi bi-image"></i>
+                                        <p>No hay logo configurado</p>
+                                    </div>
+                                @endif
                             </div>
+                            <small class="text-muted">Vista previa del logo actual</small>
+                        </div>
                         </div>
                     </div>
                 </div>
@@ -60,7 +69,16 @@
                             </div>
                             <div class="col-md-6 text-center">
                                 <div class="watermark-preview">
-                                    <img src="data:image/png;base64,{{ base64_encode(Storage::disk('public')->get($appearance->watermark_path)) }}" alt="Vista previa de la marca de agua" id="watermark-preview-img" style="opacity: {{ ($appearance->watermark_opacity ?? 10)  }};">
+                                    @if($appearance && $appearance->watermark_path && $appearance->watermark_path != 'images/zonda/watermark.png')
+                                        <img src="data:image/png;base64,{{ base64_encode(Storage::disk('public')->get($appearance->watermark_path)) }}" alt="Vista previa de la marca de agua" id="watermark-preview-img" style="opacity: {{ ($appearance->watermark_opacity ?? 0.1)  }};">
+                                    @elseif($appearance && $appearance->watermark_path && $appearance->watermark_path == 'images/zonda/watermark.png')
+                                        <img src="{{ asset('images/zonda/watermark.png') }}" alt="Vista previa de la marca de agua genérica" id="watermark-preview-img" style="opacity: 0.1;">
+                                    @else                                      
+                                        <div class="watermark-placeholder">
+                                            <i class="bi bi-droplet"></i>
+                                            <p>No hay marca de agua configurada</p>
+                                        </div>
+                                    @endif
                                 </div>
                                 <small class="text-muted">Vista previa de la marca de agua actual</small>
                             </div>

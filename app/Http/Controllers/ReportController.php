@@ -1083,18 +1083,14 @@ class ReportController extends Controller
         // Obtener la configuración de apariencia
         $appearance = AppearanceSetting::first();
 
-        // Si no existe, crear una instancia con valores por defecto
-        if (!$appearance) {
-            $appearance = new AppearanceSetting();
+        if ($appearance) {
+            // Agregar los colores y la ruta del logo a los datos que se pasan a la vista
+            $data['primaryColor'] = $appearance->primary_color;
+            $data['secondaryColor'] = $appearance->secondary_color;
+            $data['logoPath'] = $appearance->logo_path;
+            $data['watermarkPath'] =  $appearance->watermark_path;
+            $data['watermarkOpacity'] = $appearance->watermark_opacity ?: 0.1;
         }
-
-        // Agregar los colores y la ruta del logo a los datos que se pasan a la vista
-        $data['primaryColor'] = $appearance->primary_color;
-        $data['secondaryColor'] = $appearance->secondary_color;
-        $data['logoPath'] = $appearance->logo_path ?? 'images/zonda/landscape_logo.png';
-        $data['watermarkPath'] =  $appearance->watermark_path ?? 'images/zonda/watermark.png';
-        $data['watermarkOpacity'] = $appearance->watermark_opacity ?: 0.1;
-
         //Si son texto plano formatear las notas antes de generar el PDF
         if (isset($data['notes'])) {
             $notesContent = $data['notes'];
@@ -1159,7 +1155,7 @@ class ReportController extends Controller
 
                     // Agregar los paths correctos a los datos
                     $data['logoPath'] = $appearance->logo_path;
-                    $data['watermarkPath'] = 'images/zonda/watermark.png';
+                    $data['watermarkPath'] = $appearance->watermark_path;
                     
                     // Generar PDF
                     $pdf = Pdf::loadView('report.pdf.certificate', $data);

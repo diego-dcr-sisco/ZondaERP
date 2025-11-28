@@ -89,7 +89,7 @@
         }
 
         .bg-blue {
-             background-color: {{ $primaryColor  }};
+             background-color: {{ $primaryColor ?? '#182A41' }};
             font-weight: bold;
             padding-left: 5px;
             width: 100%;
@@ -122,7 +122,7 @@
         }
 
         .product-table thead tr {
-            background-color: {{ $secondaryColor }};
+            background-color: {{ $secondaryColor ?? '#b0bec5'}} ;
             text-align: left;
         }
 
@@ -247,7 +247,7 @@
             pointer-events: none;
             z-index: -1;
             /* opacity: 0.1; */
-            opacity: {{ $watermarkOpacity }};
+            opacity: {{ $watermarkOpacity ?? 0.1}};
         }
 
         .watermark img {
@@ -262,10 +262,11 @@
 
 <body>
     <div class="watermark">
-        @if($watermarkPath)
-        <img src="file://{{ Storage::disk('public')->path($watermarkPath) }}">
-        @else
+        @if($watermarkPath == 'images/zonda/watermark.png')
         <img src="file://{{ public_path('images/zonda/watermark.png') }}">
+        @else
+        <img src="file://{{ Storage::disk('public')->path($watermarkPath) }}">
+        
         @endif
     </div>
 
@@ -274,10 +275,10 @@
             <h1 style="font-size: 22px; margin: 0;">{{ $title }}</h1>
         </div>
         <div class="logo">
-        @if($logoPath)
-            <img src="file://{{ Storage::disk('public')->path($logoPath) }}" style="width: 300px; margin: 0;">
-        @else
+        @if($logoPath == 'images/zonda/landscape_logo.png')
             <img src="file://{{ public_path('images/zonda/landscape_logo.png') }}" style="width: 300px; margin: 0;">
+        @else
+            <img src="file://{{ Storage::disk('public')->path($logoPath) }}" style="width: 300px; margin: 0;">
         @endif
     </div>
     </div>

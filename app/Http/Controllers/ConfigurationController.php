@@ -16,9 +16,6 @@ class ConfigurationController extends Controller
         // Obtener la configuración actual o crear una por defecto
         $appearance = AppearanceSetting::first();
         
-        if (!$appearance) {
-            $appearance = new AppearanceSetting();
-        }
         
         return view('configuration.system.appearance', compact('appearance'));
     }

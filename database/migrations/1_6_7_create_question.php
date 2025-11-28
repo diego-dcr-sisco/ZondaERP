@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('question', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('tenant_id')->nullable()->constrained('tenant')->onDelete('cascade');
             $table->string('question');
             $table->foreignId('question_option_id')->constrained('question_option')->onDelete('cascade'); 
             $table->timestamps();

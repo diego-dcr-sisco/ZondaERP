@@ -33,8 +33,7 @@
             display: inline-block;
             vertical-align: top;
             position: relative;
-
-            background-image: url("file://{{ public_path('images/trans_watermark.png') }}");
+            /* background-image: url("file://{{ public_path('images/trans_watermark.png') }}"); */
             background-repeat: no-repeat;
             background-position: center;
             background-size: 50%;
@@ -105,7 +104,11 @@
             <div class="card-content">
                 <div class="device-text">
                     <div class="logo">
-                        <img src="file://{{ public_path('images/siscoplagas_logo.png') }}" style="width:70%; margin: 0;">
+                        @if($appearance && $appearance->logo_path && $appearance->logo_path != 'images/zonda/landscape_logo.png' && Storage::disk('public')->exists($appearance->logo_path))
+                            <img src="file://{{ Storage::disk('public')->path($appearance->logo_path) }}" style="width:70%; margin: 0;">
+                        @else
+                            <img src="file://{{ public_path('images/zonda/landscape_logo.png') }}" style="width:70%; margin: 0;">
+                        @endif
                     </div>
                     <div
                         style="font-size: 15px;

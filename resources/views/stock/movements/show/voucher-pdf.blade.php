@@ -184,7 +184,12 @@
     <div class="header">
         <div class="header-row">
             <div class="logo-container">
-                <img src="file://{{ public_path('images/logo.png') }}" style="width: 300px; margin: 0;">
+                @if($logo_path == 'images/zonda/landscape_logo.png')
+                    <img src="file://{{ public_path('images/zonda/landscape_logo.png') }}" style="width: 300px; margin: 0;">
+                    @else
+                    <img src="file://{{ Storage::disk('public')->path($logo_path) }}" style="width: 300px; margin: 0;">
+                    
+                @endif
             </div>
             <div class="document-info">
                 <div class="company-name">Sistema de Inventarios</div>
