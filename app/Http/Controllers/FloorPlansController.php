@@ -6,6 +6,7 @@ use App\Models\OrderIncidents;
 use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use App\Models\FloorPlans;
@@ -368,6 +369,26 @@ class FloorPlansController extends Controller
                 ->select('id', 'type_control_point_id', 'floorplan_id', 'application_area_id', 'product_id', 'nplan', 'latitude', 'itemnumber', 'longitude', 'map_x', 'map_y', 'img_tamx', 'img_tamy', 'color', 'code', 'size')
                 ->get();
 
+            $mappedDevices = $devices->map(function($device) {
+                return [
+                    'id' => $device->id,
+                    'map_x' => $device->map_x,
+                    'map_y' => $device->map_y,
+                    'type_control_point_id' => $device->type_control_point_id,
+                    'application_area_id' => $device->application_area_id,
+                    'product_id' => $device->product_id,
+                    'color' => $device->color,
+                    'code' => $device->code,
+                    'size' => $device->size,
+                    'nplan' => $device->nplan,
+                    'itemnumber' => $device->itemnumber,
+                    'latitude' => $device->latitude,
+                    'longitude' => $device->longitude,
+                    'img_tamx' => $device->img_tamx,
+                    'img_tamy' => $device->img_tamy
+                ];
+            });
+
             // Obtener las últimas 4 revisiones para cada dispositivo
             $reviews = [];
             foreach ($devices as $device) {
@@ -444,7 +465,8 @@ class FloorPlansController extends Controller
             'f_version',
             'legend',
             'logoBase64',
-            'print_data'
+            'print_data',
+            'mappedDevices'
         ));
     }
 
@@ -805,5 +827,119 @@ class FloorPlansController extends Controller
         });
 
         return $pdf->stream($pdf_name);
+    }
+
+    public function deviceDetails($id, $version, $deviceId, Request $request)
+    {
+        try {
+        
+            $floorplan = FloorPlans::with(['customer', 'service'])->findOrFail($id);
+            $device = Device::where('floorplan_id', $id)
+                        ->where('version', $version)
+                        ->where('id', $deviceId)
+                        ->firstOrFail();
+
+            $controlPoint = ControlPoint::find($device->type_control_point_id);
+            $applicationArea = ApplicationArea::find($device->application_area_id);
+            $product = ProductCatalog::find($device->product_id);
+
+            if($request->has('date') && !empty($request->get('date'))) {
+                $revisions = OrderIncidents::where('device_id', $device->id)
+                ->whereDate('created_at', $request->get('date'))
+                ->orderBy('updated_at', 'desc')
+                ->get();
+
+            }else {
+                // Obtener revisiones
+                $revisions = OrderIncidents::where('device_id', $device->id)
+                    ->orderBy('updated_at', 'desc')
+                    ->limit(6)
+                    ->get();
+            }
+            
+            
+            $groupedRevisions = $revisions->groupBy('order_id');
+
+            $year = $request->get('year', date('Y'));
+            $pestData = $this->getPestDataForDevice($deviceId, $year);
+            
+            return view('floorplans.edit.device_details', compact(
+                'floorplan',
+                'device',
+                'version',
+                'controlPoint',
+                'applicationArea',
+                'product',
+                'groupedRevisions',
+                'pestData',
+                'year'
+            ));
+
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Dispositivo no encontrado: ' . $e->getMessage());
+        }
+    }
+
+    private function getPestDataForDevice($deviceId, $year)
+    {
+        $monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 
+                    'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+        $pestData = DB::table('device_pest')
+            ->join('pest_catalog', 'device_pest.pest_id', '=', 'pest_catalog.id')
+            ->select(
+                'pest_catalog.id as pest_id',
+                'pest_catalog.name as pest_name',
+                DB::raw('MONTH(device_pest.created_at) as month'),
+                DB::raw('SUM(device_pest.total) as total_amount')
+            )
+            ->where('device_pest.device_id', $deviceId)
+            ->whereYear('device_pest.created_at', $year)
+            ->groupBy('pest_catalog.id', 'pest_catalog.name', DB::raw('MONTH(device_pest.created_at)'))
+            ->orderBy('month')
+            ->get();
+
+        $allPests = [];
+        $monthlyTotals = array_fill(1, 12, 0); // Total general por mes
+        
+        foreach ($pestData as $item) {
+            $pestId = $item->pest_id;
+            $month = $item->month;
+            
+            if (!isset($allPests[$pestId])) {
+                $allPests[$pestId] = [
+                    'pest_id' => $pestId,
+                    'pest_name' => $item->pest_name,
+                    'data' => array_fill(0, 12, 0), 
+                    'total' => 0,
+                    'color' => $this->generateColor($pestId) // Método para generar colores 
+                ];
+            }
+            
+            $allPests[$pestId]['data'][$month-1] = $item->total_amount;
+            $allPests[$pestId]['total'] += $item->total_amount;
+            $monthlyTotals[$month] += $item->total_amount;
+        }
+
+        $result = [
+            'months' => $monthNames,
+            'monthly_totals' => array_values($monthlyTotals), 
+            'pests' => array_values($allPests),
+            'year' => $year
+        ];
+
+
+        return $result;
+    }
+
+    // Método auxiliar para generar colores 
+    private function generateColor($id)
+    {
+        $colors = [
+            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+            '#FF9F40', '#8AC926', '#1982C4', '#6A4C93', '#FF595E'
+        ];
+        
+        return $colors[$id % count($colors)] ?? '#'.substr(md5($id), 0, 6);
     }
 }

@@ -470,7 +470,7 @@ Route::prefix('floorplans')
         Route::post('/store/{customerId}', [FloorplansController::class, 'store'])->name('store');
         Route::get('/edit/{id}', [FloorplansController::class, 'edit'])->name(name: 'edit');
         Route::get('/devices/{id}/{version}', [FloorplansController::class, 'editDevices'])->name('devices');
-
+        Route::get('devices/{id}/{version}/{deviceId}',[FloorplansController::class, 'deviceDetails'])->name('device.details');
         //Route::post('/search/devices/{id}', [FloorplansController::class, 'searchDevicesbyVersion'])->name('search.devices');
     
         Route::get('/print/{id}', [FloorplansController::class, 'print'])->name('print');

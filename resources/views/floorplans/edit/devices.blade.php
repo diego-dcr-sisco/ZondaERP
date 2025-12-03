@@ -346,6 +346,10 @@
                     <input type="hidden" id="point-index" value="" />
                 </div>
                 <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" 
+                            onclick="redirectToDeviceDetails()">
+                        Detalles
+                    </button>
                     <button type="button" class="btn btn-primary"
                         onclick="setDevice()">{{ __('buttons.store') }}</button>
                     <button type="button" class="btn btn-danger"
@@ -372,7 +376,9 @@
             const imgURL = "{{ route('image.show', ['path' => $floorplan->path]) }}";
 
             var data = @json($ctrlPoints);
-            var devices = @json($devices);
+            //var devices = @json($devices);
+            const devices = @json($mappedDevices);
+            
             var nplans = @json($nplans);
             var pointNames = @json($pointNames);
             var areaNames = @json($areaNames);
@@ -517,7 +523,7 @@
                 $('#pointModal').modal('hide');
             }
 
-            function addPoint(x, y, pointId, areaId, productId, color, code) {
+            function addPoint(x, y, pointId, areaId, productId, color, code, deviceId = null) {
                 x = parseFloat(x);
                 y = parseFloat(y);
                 const point = new fabric.Circle({
@@ -579,7 +585,8 @@
                     img_tamx: 0,
                     img_tamy: 0,
                     count: count,
-                    size: currentPointSize
+                    size: currentPointSize,
+                    device_id: deviceId
                 };
 
                 points.push(newPoint);
@@ -738,7 +745,7 @@
                     var total = max_range - min_range + 1;
                     countPoints--;
                     index = count - 1;
-                    addPoint(pointer.x, pointer.y, point_id, area_id, product_id, color, code);
+                    addPoint(pointer.x, pointer.y, point_id, area_id, product_id, color, code,id);
                     createLegend();
                     //sortPoints()
 
@@ -1051,7 +1058,8 @@
                             device.application_area_id,
                             device.product_id,
                             device.color,
-                            device.code
+                            device.code,
+                            device.id
                         );
                     })
                     createLegend();
@@ -1111,6 +1119,17 @@
             document.getElementById('point-size').addEventListener('change', function() {
                 changePointSize(this.value);
             });
+
+            function redirectToDeviceDetails() {
+                const floorplanId = {{ $floorplan->id }};
+                const version = '{{ $f_version->version ?? '' }}';
+                const pointIndex = $('#point-index').val();
+                const device = points.find(item => item.index == pointIndex);
+                
+                window.location.href = `/floorplans/devices/${floorplanId}/${version}/${device.device_id}`;
+                
+                
+            }
         </script>
 
         <script>
