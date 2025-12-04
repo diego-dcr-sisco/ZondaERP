@@ -43,50 +43,50 @@
         <!-- Información del Dispositivo -->
         <div class="col-md-12">
             <div class="card shadow-sm mb-4">
-                <div class="card-body d-flex">
-                    <div class="col-11">
-                        <h5 class="card-title mb-3 fw-bold">
-                            <i class="bi bi-info-circle me-2"></i>Información del Dispositivo
-                        </h5>
-                        <div class="row">
-                            <div class="col-3 mb-3">
-                                <label class="fw-bold text-muted">Código:</label>
-                                <p class="mb-0 fs-5 text-primary">{{ $device->code ?? 'N/A' }}</p>
-                            </div>
-                            <div class="col-3 mb-3">
-                                <label class="fw-bold text-muted">Número:</label>
-                                <p class="mb-0 fs-5">{{ $device->nplan ?? 'N/A' }}</p>
-                            </div>
-                            <div class="col-3 mb-3">
-                                <label class="fw-bold text-muted">Punto de Control:</label>
-                                <p class="mb-0">{{ $controlPoint->name ?? 'N/A' }}</p>
-                            </div>
-                            <div class="col-3 mb-3">
-                                <label class="fw-bold text-muted">Área:</label>
-                                <p class="mb-0">{{ $applicationArea->name ?? 'N/A' }}</p>
-                            </div>
-                            <div class="col-3 mb-3">
-                                <label class="fw-bold text-muted">Producto:</label>
-                                <p class="mb-0">{{ $product->name ?? 'Sin producto' }}</p>
-                            </div>
-                            <div class="col-3 mb-3">
-                                <label class="fw-bold text-muted">Color:</label>
-                                <div class="d-flex align-items-center">
-                                    <div class="color-box me-2" style="width: 20px; height: 20px; background-color: {{ $device->color ?? '#000000' }}; border: 1px solid #ccc;"></div>
-                                    <span class="text-uppercase">{{ $device->color ?? 'N/A' }}</span>
+                <div class="card-body">
+                    <h5 class="card-title mb-3 fw-bold">
+                        <i class="bi bi-info-circle me-2"></i>Información del Dispositivo
+                    </h5>
+                    
+                    <div class="d-flex flex-column flex-lg-row gap-3">
+                        <div class="flex-grow-1">
+                            <div class="row">
+                                <div class="col-lg-3 col-md-4 col-6 mb-3">
+                                    <label class="fw-bold text-muted">Código:</label>
+                                    <p class="mb-0 fs-5 text-primary">{{ $device->code ?? 'N/A' }}</p>
+                                </div>
+                                <div class="col-lg-3 col-md-4 col-6 mb-3">
+                                    <label class="fw-bold text-muted">Número:</label>
+                                    <p class="mb-0 fs-5">{{ $device->nplan ?? 'N/A' }}</p>
+                                </div>
+                                <div class="col-lg-3 col-md-4 col-6 mb-3">
+                                    <label class="fw-bold text-muted">Punto de Control:</label>
+                                    <p class="mb-0">{{ $controlPoint->name ?? 'N/A' }}</p>
+                                </div>
+                                <div class="col-lg-3 col-md-4 col-6 mb-3">
+                                    <label class="fw-bold text-muted">Área:</label>
+                                    <p class="mb-0">{{ $applicationArea->name ?? 'N/A' }}</p>
+                                </div>
+                                <div class="col-lg-3 col-md-4 col-6 mb-3">
+                                    <label class="fw-bold text-muted">Producto:</label>
+                                    <p class="mb-0">{{ $product->name ?? 'Sin producto' }}</p>
+                                </div>
+                                <div class="col-lg-3 col-md-4 col-6 mb-3">
+                                    <label class="fw-bold text-muted">Color:</label>
+                                    <div class="d-flex align-items-center">
+                                        <div class="color-box me-2" style="width: 20px; height: 20px; background-color: {{ $device->color ?? '#000000' }}; border: 1px solid #ccc;"></div>
+                                        <span class="text-uppercase">{{ $device->color ?? 'N/A' }}</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>    
-                    </div>
-                    <div class="col-1">
-                        <div class="text-center">
+                        </div>                       
+                        <div class="flex-shrink-0 text-center mt-3 mt-lg-0">
                             <label class="fw-bold text-muted d-block mb-2">Código QR</label>
                             <img src="data:image/png;base64,{{ base64_encode($device->qr) }}" 
                                 alt="QR del dispositivo {{ $device->code }}"
                                 class="img-fluid border rounded"
                                 style="max-width: 120px; height: auto;">
                         </div>
-                        
                     </div>
                 </div>
             </div>
