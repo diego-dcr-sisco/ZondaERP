@@ -10,6 +10,7 @@ use CfdiUtils\CertificateLoader;
 
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use App\Tenancy\TenantManager;
 
 class CfdiService
 {
@@ -19,9 +20,24 @@ class CfdiService
 
     public function __construct()
     {
-        $this->certificatePath = Storage::path('invoices/certificates/certificate.cer');
-        $this->keyPath = Storage::path('invoices/certificates/private_key_new.key');
-        $this->password = config('services.sat.password');
+        
+        
+    }
+    // inicializar las rutas de los archivos del tenant
+     protected function initialize(){
+        if ($this->initialized) {
+            return;
+        }
+        $tenantStorage = Storage::disk('public');
+        $this->certificatePath = $tenantStorage->path('invoices/certificates/certificate.cer');
+        $this->keyPath = $tenantStorage->path('invoices/certificates/private_key.key');
+
+        $this->initialized = true;
+    }
+
+    public function filesVerification(){
+
+        $this->initialize();
 
         // Verificar que los archivos existan
         if (!file_exists($this->certificatePath)) {
@@ -30,17 +46,15 @@ class CfdiService
 
         if (!file_exists($this->keyPath)) {
             throw new \RuntimeException('El archivo de la llave privada no existe en: ' . $this->keyPath);
-        }
+        }  
 
-        // Verificar formato PEM
-        $privateKey = file_get_contents($this->keyPath);
-        if (strpos($privateKey, '-----BEGIN PRIVATE KEY-----') === false) {
-            throw new \RuntimeException('La llave privada no está en formato PEM válido');
-        }
     }
 
     protected function loadCredentials()
     {
+        $this->initialize();
+        $sat_config = TenantManager::getSatConfiguration();
+        $this->password = $sat_config['sat_cert_password'];
         try {
             $certificate = file_get_contents($this->certificatePath);
             $privateKey = file_get_contents($this->keyPath);
@@ -65,6 +79,7 @@ class CfdiService
     public function generateXml(Invoice $invoice)
     {
         try {
+            $sat_config = TenantManager::getSatConfiguration();
             // Cargar credenciales primero
             $credential = $this->loadCredentials();
             $privateKey = file_get_contents($this->keyPath);
@@ -80,7 +95,7 @@ class CfdiService
                 // 'FormaPago' => $invoice->payment_type,
                 'MetodoPago' => $invoice->payment_method == 1 ? 'PPD' : 'PUE',
                 'TipoDeComprobante' => 'I',
-                'LugarExpedicion' => config('services.sat.zip_code'), // Solo código postal
+                'LugarExpedicion' => $sat_config['zip_code'], // Solo código postal
                 'Moneda' => $invoice->currency,
                 'SubTotal' => number_format($invoice->subtotal, 2, '.', ''),
                 'Total' => number_format($invoice->total, 2, '.', ''),
@@ -91,9 +106,9 @@ class CfdiService
 
             // Emisor - Solo campos permitidos en CFDI 4.0
             $comprobante->addEmisor([
-                'Rfc' => config('services.sat.rfc'),
-                'Nombre' => config('services.sat.business_name'),
-                'RegimenFiscal' => config('services.sat.tax_regime'), // Debe ser código como "601"
+                'Rfc' => $sat_config['rfc'],
+                'Nombre' => $sat_config['business_name'],
+                'RegimenFiscal' => $sat_config['tax_regime'], // Debe ser código como "601"
             ]);
 
             // Receptor
@@ -154,7 +169,8 @@ class CfdiService
             $creator->addSumasConceptos(null, 2);
             $creator->addSello($privateKey, $this->password);
 
-            $xmlPath = storage_path('app/invoices/xml/' . $invoice->folio . '.xml');
+            $tenantStorage = Storage::disk('public');
+            $xmlPath = $tenantStorage->path('invoices/xml/' . $invoice->folio . '.xml');
             file_put_contents($xmlPath, $creator->asXml());
 
             $invoice->update([

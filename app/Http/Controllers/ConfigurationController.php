@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Models\AppearanceSetting;
 use App\Models\Tenant;
+use App\Tenancy\TenantManager;
+use App\Services\FacturamaService as FacturamaService;
+
 class ConfigurationController extends Controller
 {
     public function index() {
@@ -91,4 +94,39 @@ class ConfigurationController extends Controller
         }
     }
 
+    public function satConfiguration(){
+
+        $currentTenantId = TenantManager::getCurrentTenantId();
+        $currentTenant = Tenant::findOrFail($currentTenantId);
+        return view('configuration.system.certificates', compact('currentTenant'));
+    }
+
+    public function uploadCertificate(Request $request){
+
+         // Manejar la carga del Certificado
+            if ($request->hasFile('certificate_file')) {
+
+                $this->storeTenantCertificates($request->file('certificate_file'), 'certificate');  
+            }
+
+            // Manejar la carga de la llave
+            if ($request->hasFile('private_key')) {
+                $this->storeTenantCertificates($request->file('private_key'), 'private_key');
+            }
+
+        return view('configuration.system.certificates');
+    }
+
+    private function storeTenantCertificates($file, $type)
+    {
+        $extension = $file->getClientOriginalExtension();
+        $filename = "{$type}.{$extension}";
+        $directory = 'invoices/certificates';
+        
+        // Eliminar archivos anteriores con el mismo nombre base
+        $this->deletePreviousFiles($type, $directory, 'public');
+        
+        // Guardar el nuevo archivo
+        return $file->storeAs($directory, $filename, 'public');
+    }
 }

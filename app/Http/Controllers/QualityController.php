@@ -23,6 +23,8 @@ use App\Models\RotationPlan;
 use App\Models\ProductCatalog;
 use App\Models\Filenames;
 use App\Models\ServiceType;
+use App\Models\PestCatalog;
+use App\Models\DevicePest;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
@@ -1355,5 +1357,196 @@ class QualityController extends Controller
         ];
 
         ///////////////////////////////// FIN DE GRAFICAS DE CALIDAD ////////////////////////////////////////
+    }
+
+    public function pestIncidents(Request $request)
+    {
+        $years = range(2024, date('Y'));
+        $pests = PestCatalog::orderBy('name')->pluck('name', 'id');
+
+        // Obtener datos para la gráfica
+        $chartData = $this->getChartData($request);
+
+        return view('dashboard.quality.analytics', compact('years', 'pests', 'chartData'));
+    }
+
+    public function filterPests(Request $request)
+    {
+        
+        $years = range(2024, date('Y'));
+        $pests = PestCatalog::orderBy('name')->pluck('name', 'id');
+
+
+        // Obtener datos filtrados
+        $chartData = $this->getChartData($request);
+
+        return response()->json($chartData);
+
+        //return view('dashboard.quality.analytics', compact('years', 'pests', 'chartData'));
+    }
+
+    private function getChartData(Request $request)
+    {
+        $year = $request->get('year', date('Y'));
+        $selectedPests = $request->get('pests', []);
+        $pestsAll = $request->get('pests_all');
+        
+        $pestIds = [];
+        
+        if ($pestsAll === 'all') {
+            // Usar todas las plagas
+            $pestIds = PestCatalog::pluck('id')->toArray();
+        } 
+        // Si se seleccionaron plagas específicas
+        elseif (!empty($selectedPests)) {
+            // Filtrar plagas
+            $pestIds = array_filter($selectedPests, function($value) {
+                return is_numeric($value);
+            });
+        }
+        else {
+            $pestIds = PestCatalog::pluck('id')->toArray();
+        }
+
+        // Primera consulta: obtener los datos agregados
+        $baseQuery = DevicePest::query()
+            ->join('order', 'device_pest.order_id', '=', 'order.id')
+            ->select(
+                DB::raw('MONTH(order.created_at) as month'),
+                'device_pest.pest_id',
+                DB::raw('SUM(device_pest.total) as total_amount')
+            );
+
+        if ($year) {
+            $baseQuery->whereYear('order.created_at', $year);
+        }
+
+        if (!empty($pestIds)) {
+            $baseQuery->whereIn('device_pest.pest_id', $pestIds);
+        }
+
+        $baseResults = $baseQuery->groupBy('month', 'device_pest.pest_id')
+            ->orderBy('month')
+            ->orderBy('device_pest.pest_id')
+            ->get();
+
+        // Segunda consulta: obtener los nombres de las plagas
+        if ($baseResults->isNotEmpty()) {
+            $fetchedPestIds = $baseResults->pluck('pest_id')->unique();
+            $pestNames = PestCatalog::whereIn('id', $fetchedPestIds)
+                ->pluck('name', 'id')
+                ->toArray();
+
+            // Combinar los resultados
+            $results = $baseResults->map(function ($item) use ($pestNames) {
+                return (object) [
+                    'month' => $item->month,
+                    'pest_id' => $item->pest_id,
+                    'pest_name' => $pestNames[$item->pest_id] ?? 'Plaga Desconocida',
+                    'total_amount' => $item->total_amount
+                ];
+            });
+        } else {
+            $results = collect();
+        }
+
+        // Pasar los pestIds para el formato
+        return $this->formatChartData($results, $pestIds);
+    }
+
+    private function formatChartData($results, $pestIds)
+    {
+        $labels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+        
+        // Si se seleccionó una sola plaga
+        if (count($pestIds) === 1) {
+            $pestId = $pestIds[0];
+            $monthlyData = array_fill(0, 12, 0);
+            $pestName = PestCatalog::where('id', $pestId)->value('name') ?? 'Plaga';
+            
+            // Buscar el nombre de la plaga en los resultados
+            foreach ($results as $result) {
+                if ($result->pest_id == $pestId) {
+                    $monthlyData[$result->month -1] = $result->total_amount;
+                    $pestName = $result->pest_name;
+                }
+            }
+
+            return [
+                'labels' => $labels,
+                'datasets' => [
+                    [
+                        'label' => $pestName,
+                        'data' => $monthlyData,
+                        'borderColor' => '#4e73df',
+                        'backgroundColor' => 'rgba(78, 115, 223, 0.1)',
+                        'borderWidth' => 2,
+                        'fill' => true
+                    ]
+                ]
+            ];
+        }
+
+        // Si se seleccionaron múltiples plagas o todas
+        $datasets = [];
+        $colors = [
+            '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', 
+            '#e74a3b', '#858796', '#5a5c69', '#6f42c1',
+            '#20c9a6', '#fd7e14', '#e83e8c', '#6c757d'
+        ];
+        
+        // Agrupar resultados por plaga
+        $groupedByPest = $results->groupBy('pest_name');
+        
+        
+        if ($groupedByPest->isEmpty() && !empty($pestIds)) {
+            $pestNames = PestCatalog::whereIn('id', $pestIds)
+                ->pluck('name', 'id')
+                ->toArray();
+                
+            $colorIndex = 0;
+            foreach ($pestNames as $pestName) {
+                $datasets[] = [
+                    'label' => $pestName,
+                    'data' => array_fill(0, 12, 0),
+                    'borderColor' => $colors[$colorIndex % count($colors)],
+                    'backgroundColor' => $this->hexToRgba($colors[$colorIndex % count($colors)], 0.1),
+                    'borderWidth' => 2,
+                    'fill' => false
+                ];
+                $colorIndex++;
+            }
+        } else {
+            // Mostrar las plagas que tienen datos
+            $colorIndex = 0;
+            foreach ($groupedByPest as $pestName => $pestData) {
+                $monthlyData = array_fill(0, 12, 0);
+                
+                foreach ($pestData as $data) {
+                    $monthlyData[$data->month - 1] = $data->total_amount;
+                }
+
+                $datasets[] = [
+                    'label' => $pestName,
+                    'data' => $monthlyData,
+                    'borderColor' => $colors[$colorIndex % count($colors)],
+                    'backgroundColor' => $this->hexToRgba($colors[$colorIndex % count($colors)], 0.1),
+                    'borderWidth' => 2,
+                    'fill' => false
+                ];
+
+                $colorIndex++;
+            }
+        }
+
+        return [
+            'labels' => $labels,
+            'datasets' => $datasets
+        ];
+    }
+
+    private function hexToRgba($hex, $alpha = 1) {
+        list($r, $g, $b) = sscanf($hex, "#%02x%02x%02x");
+        return "rgba($r, $g, $b, $alpha)";
     }
 }

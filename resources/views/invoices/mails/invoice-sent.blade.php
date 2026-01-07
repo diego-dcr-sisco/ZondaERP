@@ -35,7 +35,7 @@
         
         <p>En los archivos adjuntos encontrará:</p>
         <ul>
-            @if($invoice->pdf_file)
+            @if($invoice->pdf_path)
                 <li>Factura en formato PDF</li>
             @endif
             @if($invoice->xml_file)

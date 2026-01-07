@@ -19,6 +19,10 @@ use App\Models\Payroll;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+use App\Tenancy\TenantManager;
+use App\Models\Tenant;
+use App\Models\AppearanceSetting;
+
 // carbon
 use Carbon\Carbon;
 use App\Services\CfdiService;
@@ -697,15 +701,20 @@ class InvoiceController extends Controller
 
     public function create(Request $request)
     {
+        $sat_config = TenantManager::getSatConfiguration();
         $navigation = $this->navigation;
         $invoiceCustomers = InvoiceCustomer::all();
         $invoiceConcepts = InvoiceConcept::all();
         $paymentForms = Invoice::getPaymentFormOptions();
         $cfdiTypes = $this->cfdiTypes;
         $cfdiUsages = $this->cfdiUsages;
+        $taxRegimes = $this->taxRegimes;
 
         $order_id = $request->input('order_id') ?? null;
         $url_action = route('invoices.store');
+        $logoPath = AppearanceSetting::value('logo_path');
+    
+        
 
         return view('invoices.create', compact(
             'navigation',
@@ -715,7 +724,10 @@ class InvoiceController extends Controller
             'order_id',
             'url_action',
             'cfdiTypes',
-            'cfdiUsages'
+            'cfdiUsages',
+            'sat_config',
+            'taxRegimes',
+            'logoPath'
         ));
     }
 
@@ -724,6 +736,9 @@ class InvoiceController extends Controller
         $invoice_services = [];
         $invoice = Invoice::with(['customer', 'items'])->findOrFail($id);
         $url_action = route('invoices.update');
+        $sat_config = TenantManager::getSatConfiguration();
+        $taxRegimes = $this->taxRegimes;
+        $logoPath = AppearanceSetting::value('logo_path');
 
         if ($invoice->status == 5) {
             return redirect()->route('invoices.show', ['id' => $id]);
@@ -785,7 +800,10 @@ class InvoiceController extends Controller
             'preloadedData',
             'url_action',
             'cfdiTypes',
-            'cfdiUsages'
+            'cfdiUsages',
+            'sat_config',
+            'taxRegimes',
+            'logoPath'
         ));
     }
 
@@ -872,7 +890,7 @@ class InvoiceController extends Controller
     public function store(Request $request)
     {
         try {
-
+            $sat_config = TenantManager::getSatConfiguration();
             $invoice_customer = InvoiceCustomer::findOrFail($request->invoice_customer_id);
 
             if (!$invoice_customer) {
@@ -885,7 +903,7 @@ class InvoiceController extends Controller
             $invoice->fill($request->all());
             $invoice->folio = $this->generateFolio($next_id);
             $invoice->serie = 'I';
-            $invoice->expedition_place = config('services.sat.zip_code');
+            $invoice->expedition_place = $sat_config['zip_code'];
             $invoice->status = '01'; // Pendiente
 
             $invoice->receiver_name = $invoice_customer->social_reason;
@@ -940,7 +958,7 @@ class InvoiceController extends Controller
                 ->with('success', 'Factura creada exitosamente. Ahora puedes generar el XML.');
 
         } catch (\Exception $e) {
-            dd($e);
+            // dd($e);
             return redirect()->route('invoices.index')
                 ->with('error', 'Error al crear la factura: ' . $e->getMessage());
         }
@@ -948,11 +966,15 @@ class InvoiceController extends Controller
 
     public function show($id)
     {
+        $sat_config = TenantManager::getSatConfiguration();
         $navigation = $this->navigation;
         $cfdiTypes = $this->cfdiTypes;
         $invoice = Invoice::findOrFail($id);
+        $taxRegimes = $this->taxRegimes;
+        $appearance = AppearanceSetting::first();
+        $logoPath = $appearance->logo_path;
 
-        return view('invoices.show', compact('navigation', 'invoice', 'cfdiTypes'));
+        return view('invoices.show', compact('navigation', 'invoice', 'cfdiTypes','sat_config','taxRegimes','logoPath'));
 
     }
 
@@ -965,6 +987,7 @@ class InvoiceController extends Controller
         }
 
         try {
+            $sat_config = TenantManager::getSatConfiguration();
             $customer = Customer::find($source->customer_id);
             $customerTaxData = InvoiceCustomer::where('customer_id', $customer->id)->first();
 
@@ -988,7 +1011,7 @@ class InvoiceController extends Controller
             }
             $invoice->issue_date = Carbon::now();
             $invoice->due_date = $customerTaxData->payment_end_date ?? $invoice->issue_date->addDays(30);
-            $invoice->expedition_place = config('services.sat.zip_code'); // Solo código postal
+            $invoice->expedition_place = $sat_config['zip_code']; // Solo código postal
 
             // manejar logica del subtotal y total
             $invoice->subtotal = 0;
@@ -1110,7 +1133,8 @@ class InvoiceController extends Controller
                 ->with('error', 'Funcionalidad de descarga de XML desde Facturama no implementada aún.');
         }
 
-        $path = $invoice->xml_file ?: storage_path('app/invoices/xml/' . $invoice->folio . '.xml');
+        // $path = $invoice->xml_file ?: storage_path('app/invoices/xml/' . $invoice->folio . '.xml');
+        $path = $invoice->xml_file ?: Storage::disk('public')->path('invoices/xml/' . $invoice->folio . '.xml');
 
         if (!file_exists($path)) {
             abort(404);
@@ -1123,25 +1147,39 @@ class InvoiceController extends Controller
     public function generatePDF($id)
     {
         $invoice = Invoice::findOrFail($id);
-        $pdfPath = storage_path('app/invoices/pdf/' . $invoice->folio . '.pdf');
+        $pdfPath = Storage::disk('public')->path('invoices/pdf/' . $invoice->folio . '.pdf');
         $cfdiTypes = $this->cfdiTypes;
+        $sat_config = TenantManager::getSatConfiguration();
+        $taxRegimes = $this->taxRegimes;
+        $appearance = AppearanceSetting::first();
+        $logoPath = $appearance->logo_path;
 
         if (file_exists($pdfPath)) {
             // Si el PDF ya existe, solo mostrarlo
-            return redirect()->route('invoices.showPdf', ['invoiceId' => $invoice->id, 'cfdiTypes' => $cfdiTypes]);
+            return redirect()->route('invoices.show.pdf', ['id' => $invoice->id]);
         }
 
         try {
-            $pdf = PDF::loadView('invoices.pdf_preview', compact('invoice'));
+
+            if (!Storage::disk('public')->exists('invoices/pdf')) {
+                 Storage::disk('public')->makeDirectory('invoices/pdf');
+            }
+            $pdf = PDF::loadView('invoices.pdf_print', compact('invoice','sat_config','taxRegimes','logoPath'))
+                ->setPaper('letter', 'portrait')
+                ->setOptions([
+                    'isRemoteEnabled' => true,
+                    'isPhpEnabled' => true,
+                ]);
             $pdf->save($pdfPath);
 
-            $invoice->pdf_path = $pdfPath;
-            $invoice->save();
+            Invoice::where('id', $invoice->id)->update([
+                'pdf_path' => 'invoices/pdf/' . $invoice->folio . '.pdf'
+            ]);
 
             return redirect()->route('invoices.show.pdf', ['invoiceId' => $invoice->id])
                 ->with('success', 'PDF generado exitosamente.');
         } catch (\Exception $e) {
-            dd($e);
+            //dd($e);
             return redirect()->route('invoices.index')
                 ->with('error', 'Error al generar el PDF: ' . $e->getMessage());
         }
@@ -1150,24 +1188,37 @@ class InvoiceController extends Controller
     public function showPdf($invoiceId)
     {
         $invoice = Invoice::findOrFail($invoiceId);
-        // dd($invoice);
+        $filename = $invoice->folio . '.pdf';
+        $path = "invoices/pdf/{$filename}";
+        $fullPath = Storage::disk('public')->path($path);
+         
+        if (!Storage::disk('public')->exists($path)) {
 
-        $path = $invoice->pdf_path ?: storage_path('app/invoices/pdf/' . $invoice->folio . '.pdf');
-        if (!file_exists($path)) {
             $this->generatePDF($invoiceId);
         }
-        return response()->download($path, $invoice->folio . '.pdf', [
+        return response()->download($fullPath, $invoice->folio . '.pdf', [
             'Content-Type' => 'application/pdf'
-        ]);
+        
+    ]);
+
     }
 
     public function showCustomerInvoices($id)
     {
         $navigation = [
-            'Dashboard' => route('invoices.index'),
-            'Facturas' => route('invoices.index'),
-            'Clientes' => route('invoices.customers'),
-        ];
+            'Dashboard' => [
+                'route' => route('invoices.index'),
+                'permission' => null
+            ],
+            'Facturas' => [
+                'route' => route('invoices.index'),
+                'permission' => null
+            ],
+            'Clientes' => [
+                'route' => route('invoices.customers'),
+                'permission' => null
+            ]
+        ];        
 
         $customer = InvoiceCustomer::findOrFail($id);
         $invoices = $customer->customer->invoices;
@@ -1176,7 +1227,7 @@ class InvoiceController extends Controller
     }
 
     public function stampInvoice(string $id)
-    {
+    {  
         try {
             $fac_service = new FacturamaService($this->facturama_user, $this->facturama_password);
             $response = $fac_service->createInvoice($id);
@@ -1194,7 +1245,9 @@ class InvoiceController extends Controller
                     'sat_cert_number' => $data->Complement->TaxStamp->SatCertNumber,
                     'sat_sign' => $data->Complement->TaxStamp->SatSign,
                     'rfc_prov_cert' => $data->Complement->TaxStamp->RfcProvCertif,
-                    'csd_serial_number' => $data->CertNumber
+                    'csd_serial_number' => $data->CertNumber,
+                    'xml_file' => 'stampedXML/'.$data->Id.'.xml',
+                    'pdf_path' => 'stampedXML/'.$data->Id.'.pdf',
                 ]);
                 return back()->with('success', $response['message']);
             } else {
@@ -1279,7 +1332,7 @@ class InvoiceController extends Controller
             // Enviar el email
             Mail::to($customerEmail)->send(new InvoiceSent($invoice, $order, $contract));
 
-            // Actualizar el estado de la factura como envia                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            da (opcional)
+            // Actualizar el estado de la factura como enviada                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            da (opcional)
             $invoice->update(['status' => 7]); // 7 = enviada
 
             return redirect()->back()->with('success', 'Factura enviada correctamente a ' . $customerEmail);
@@ -1342,77 +1395,107 @@ class InvoiceController extends Controller
 
     public function downloadInvoice(string $id)
     {
-        $invoice = Invoice::findOrFail($id);
-        $facturamaService = new FacturamaService($this->facturama_user, $this->facturama_password);
-        $pdf_response = $facturamaService->getInvoiceFormat('pdf', 'issued', $invoice->facturama_token);
-        $xml_response = $facturamaService->getInvoiceFormat('xml', 'issued', $invoice->facturama_token);
+        try{
 
-        $zipFileName = 'factura_' . time() . '.zip';
+            $invoice = Invoice::findOrFail($id);
 
-        // Crear ZIP en storage
-        $zipPath = Storage::disk('local')->path('temp/' . $zipFileName);
-        $filename = 'factura_' . $invoice->folio . '_' . $invoice->issued_date;
+            $facturamaService = new FacturamaService($this->facturama_user, $this->facturama_password);
+            $pdf_response = $facturamaService->getInvoiceFormat('pdf', 'issuedLite', $invoice->facturama_token);
+            $xml_response = $facturamaService->getInvoiceFormat('xml', 'issuedLite', $invoice->facturama_token);
 
-        $zip = new ZipArchive;
-        if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
-            $zip->addFile($pdf_response['full_path'], $filename . '.pdf');
-            $zip->addFile($xml_response['full_path'], $filename . '.xml');
-            $zip->close();
+            $zipFileName = 'factura_' . time() . '.zip';
+            
 
-            return response()->download($zipPath, $zipFileName)
-                ->deleteFileAfterSend(true);
-        }
-        return response()->json(['error' => 'Error creando ZIP'], 500);
+            // Crear ZIP en storage
+            $zipPath = Storage::disk('public')->path('temp/' . $zipFileName);
+            // Asegurar que el directorio existe
+            if (!file_exists(dirname($zipPath))) {
+                mkdir(dirname($zipPath), 0755, true);
+            }
+            
+            $filename = 'factura_' . $invoice->folio . '_' . $invoice->issued_date;
+            
+            $zip = new ZipArchive;
+            if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
+                $zip->addFile($pdf_response['full_path'], $filename . '.pdf');
+                $zip->addFile($xml_response['full_path'], $filename . '.xml');
+                $zip->close();
+
+                return response()->download($zipPath, $zipFileName)
+                    ->deleteFileAfterSend(true);
+            }
+
+        }catch(\Exception $e){
+            return response(['error' => 'Error creando ZIP: ' . $e->getMessage()], 500);
+        }  
     }
 
     public function downloadCreditNote(string $id)
     {
-        $credit_note = CreditNote::findOrFail($id);
-        $facturamaService = new FacturamaService($this->facturama_user, $this->facturama_password);
-        $pdf_response = $facturamaService->getInvoiceFormat('pdf', 'issued', $credit_note->facturama_token);
-        $xml_response = $facturamaService->getInvoiceFormat('xml', 'issued', $credit_note->facturama_token);
+        try{
 
-        $zipFileName = 'nota_credito_' . time() . '.zip';
+            $credit_note = CreditNote::findOrFail($id);
+            $facturamaService = new FacturamaService($this->facturama_user, $this->facturama_password);
+            $pdf_response = $facturamaService->getInvoiceFormat('pdf', 'issuedLite', $credit_note->facturama_token);
+            $xml_response = $facturamaService->getInvoiceFormat('xml', 'issuedLite', $credit_note->facturama_token);
 
-        // Crear ZIP en storage
-        $zipPath = Storage::disk('local')->path('temp/' . $zipFileName);
-        $filename = 'nota_credito_' . $credit_note->folio . '_' . $credit_note->stamped_at;
+            $zipFileName = 'nota_credito_' . time() . '.zip';
 
-        $zip = new ZipArchive;
-        if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
-            $zip->addFile($pdf_response['full_path'], $filename . '.pdf');
-            $zip->addFile($xml_response['full_path'], $filename . '.xml');
-            $zip->close();
+            // Crear ZIP en storage
+            $zipPath = Storage::disk('public')->path('temp/' . $zipFileName);
+            // Asegurar que el directorio existe
+            if (!file_exists(dirname($zipPath))) {
+                mkdir(dirname($zipPath), 0755, true);
+            }
 
-            return response()->download($zipPath, $zipFileName)
-                ->deleteFileAfterSend(true);
+            $filename = 'nota_credito_' . $credit_note->folio . '_' . $credit_note->stamped_at;
+
+            $zip = new ZipArchive;
+            if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
+                $zip->addFile($pdf_response['full_path'], $filename . '.pdf');
+                $zip->addFile($xml_response['full_path'], $filename . '.xml');
+                $zip->close();
+
+                return response()->download($zipPath, $zipFileName)
+                    ->deleteFileAfterSend(true);
+            }
+
+        }catch(\Exception $e){
+             return response(['error' => 'Error creando ZIP: ' . $e->getMessage()], 500);
         }
-        return response()->json(['error' => 'Error creando ZIP'], 500);
     }
 
     public function downloadPayment(string $id)
     {
-        $payment = Payment::findOrFail($id);
-        $facturamaService = new FacturamaService($this->facturama_user, $this->facturama_password);
-        $pdf_response = $facturamaService->getInvoiceFormat('pdf', 'issued', $payment->facturama_token);
-        $xml_response = $facturamaService->getInvoiceFormat('xml', 'issued', $payment->facturama_token);
+        try{
+            $payment = Payment::findOrFail($id);
+            $facturamaService = new FacturamaService($this->facturama_user, $this->facturama_password);
+            $pdf_response = $facturamaService->getInvoiceFormat('pdf', 'issuedLite', $payment->facturama_token);
+            $xml_response = $facturamaService->getInvoiceFormat('xml', 'issuedLite', $payment->facturama_token);
 
-        $zipFileName = 'complemento_pago_' . time() . '.zip';
+            $zipFileName = 'complemento_pago_' . time() . '.zip';
 
-        // Crear ZIP en storage
-        $zipPath = Storage::disk('local')->path('temp/' . $zipFileName);
-        $filename = 'complemento_pago_' . $payment->folio . '_' . $payment->stamped_at;
+            // Crear ZIP en storage
+            $zipPath = Storage::disk('public')->path('temp/' . $zipFileName);
+            if (!file_exists(dirname($zipPath))) {
+                mkdir(dirname($zipPath), 0755, true);
+            }
 
-        $zip = new ZipArchive;
-        if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
-            $zip->addFile($pdf_response['full_path'], $filename . '.pdf');
-            $zip->addFile($xml_response['full_path'], $filename . '.xml');
-            $zip->close();
+            $filename = 'complemento_pago_' . $payment->folio . '_' . $payment->stamped_at;
 
-            return response()->download($zipPath, $zipFileName)
-                ->deleteFileAfterSend(true);
+            $zip = new ZipArchive;
+            if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
+                $zip->addFile($pdf_response['full_path'], $filename . '.pdf');
+                $zip->addFile($xml_response['full_path'], $filename . '.xml');
+                $zip->close();
+
+                return response()->download($zipPath, $zipFileName)
+                    ->deleteFileAfterSend(true);
+            }
+            
+        }catch(\Exception $e){
+            return response(['error' => 'Error creando ZIP: ' . $e->getMessage()], 500);
         }
-        return response()->json(['error' => 'Error creando ZIP'], 500);
     }
 
 
@@ -1486,6 +1569,7 @@ class InvoiceController extends Controller
 
     public function createCreditNote(Request $request)
     {
+        $sat_config = TenantManager::getSatConfiguration();
         $invoices_data = [];
         //dd($request->all());
         $paymentForms = $this->paymentForms;
@@ -1494,9 +1578,6 @@ class InvoiceController extends Controller
         $taxRegimes = $this->taxRegimes;
         $status = $this->status;
         $navigation = $this->navigation;
-
-        $sat_config = config('services.sat');
-        //dd($sat_config);
 
         return view('invoices.credit-notes.create', compact('navigation', 'paymentForms', 'paymentMethods', 'cfdiUsages', 'taxRegimes', 'status', 'sat_config'));
     }
@@ -1516,8 +1597,9 @@ class InvoiceController extends Controller
         $credit_note->save();
 
         $items = $request->items;
+    
         foreach ($items as $index => $item) {
-            $concept = InvoiceConcept::find($index);
+            $concept = InvoiceConcept::find($item['concept_id']);
             CreditNoteItem::create([
                 'credit_note_id' => $credit_note->id,
                 'quantity' => $item['quantity'],
@@ -1649,13 +1731,14 @@ class InvoiceController extends Controller
                 $query->whereDate('issued_date', $request->issued_date);
             }
 
-            $invoices = $query->select('id', 'serie', 'folio', 'receiver_name', 'receiver_rfc', 'receiver_tax_zip_code', 'receiver_cfdi_use', 'receiver_fiscal_regime', 'issued_date', 'total', 'UUID')->get();
+            $invoices = $query->select('id', 'serie', 'folio', 'receiver_name', 'receiver_rfc', 'receiver_tax_zip_code', 'receiver_cfdi_use', 'receiver_fiscal_regime', 'issued_date', 'total', 'UUID','invoice_customer_id')->get();
 
             foreach ($invoices as $invoice) {
                 $invoices_data[] = [
                     'id' => $invoice->id,
                     'serie' => $invoice->serie,
                     'folio' => $invoice->folio,
+                    'invoice_customer_id' => $invoice->invoice_customer_id,
                     'receiver_name' => $invoice->receiver_name,
                     'receiver_rfc' => $invoice->receiver_rfc,
                     'receiver_tax_zip_code' => $invoice->receiver_tax_zip_code,
@@ -1668,6 +1751,7 @@ class InvoiceController extends Controller
                     'items' => $invoice->items()->get()
                 ];
             }
+            Log::info('Invoices Data: ', ['invoices_data' => $invoices_data]);
 
             $invoices = $invoices_data;
             return response()->json([
@@ -1749,6 +1833,7 @@ class InvoiceController extends Controller
 
     public function createPayment(Request $request)
     {
+        $sat_config = TenantManager::getSatConfiguration();
         $invoices_data = [];
         //dd($request->all());
         $paymentForms = $this->paymentForms;
@@ -1759,7 +1844,6 @@ class InvoiceController extends Controller
         $navigation = $this->navigation;
 
         $taxObjects = $this->taxObjects;
-        $sat_config = config('services.sat');
 
         return view('invoices.payments.create', compact('navigation', 'paymentForms', 'paymentMethods', 'cfdiUsages', 'taxRegimes', 'status', 'sat_config', 'taxObjects'));
     }
@@ -1767,7 +1851,6 @@ class InvoiceController extends Controller
     public function storePayment(Request $request)
     {
         $data = json_decode($request->selected_invoices_data);
-
         try {
             $next_id = Payment::max('id') + 1;
             $pymt = Payment::create([
@@ -1794,6 +1877,7 @@ class InvoiceController extends Controller
                     'payment_date' => Carbon::parse($pymt_item->Date)->format('Y-m-d'),
                     'amount' => $pymt_item->Amount,
                     'currency' => $pymt_item->Currency,
+                    'customer_id' => $data->CustomerId
                 ]);
 
                 $docs = $pymt_item->RelatedDocuments;
@@ -1899,7 +1983,7 @@ class InvoiceController extends Controller
         $status = $this->status;
 
         $taxObjects = $this->taxObjects;
-        $sat_config = config('services.sat');
+        $sat_config = TenantManager::getSatConfiguration();
 
         //dd(json_encode($payments));
 
@@ -2365,4 +2449,67 @@ class InvoiceController extends Controller
             $payroll->otherPayments()->create($otherPaymentData);
         }
     }
+
+    public function registerCSD()
+    {
+        try {
+            $fac_service = new FacturamaService($this->facturama_user, $this->facturama_password);
+            $result = $fac_service->handleCsdRegistration();
+            
+            // Verificar el resultado del array
+            if ($result['success']) {
+                return redirect()->route('config.sat')
+                    ->with('success', $result['message']);
+            } else {
+                return redirect()->route('config.sat')
+                    ->with('error', $result['message']);
+            }
+            
+        } catch(\Exception $e) {
+            return redirect()->route('config.sat')
+                ->with('error', 'Error al registrar CSD: ' . $e->getMessage());
+        }
+    }
+
+    public function updateCSD()
+    {
+        try {
+            $fac_service = new FacturamaService($this->facturama_user, $this->facturama_password);
+            $result = $fac_service->updateCsdRegistration();
+            
+            // Verificar el resultado del array
+            if ($result['success']) {
+                return redirect()->route('config.sat')
+                    ->with('success', $result['message']);
+            } else {
+                return redirect()->route('config.sat')
+                    ->with('error', $result['message']);
+            }
+            
+        } catch(\Exception $e) {
+            return redirect()->route('config.sat')
+                ->with('error', 'Error al actualizar CSD: ' . $e->getMessage());
+        }
+    }
+    
+    public function deleteCSD()
+    {
+        try {
+            $fac_service = new FacturamaService($this->facturama_user, $this->facturama_password);
+            $result = $fac_service->deleteCsdRegistration();
+            
+            // Verificar el resultado del array
+            if ($result['success']) {
+                return redirect()->route('config.sat')
+                    ->with('success', $result['message']);
+            } else {
+                return redirect()->route('config.sat')
+                    ->with('error', $result['message']);
+            }
+            
+        } catch(\Exception $e) {
+            return redirect()->route('config.sat')
+                ->with('error', 'Error al Eliminar CSD: ' . $e->getMessage());
+        }
+    }  
 }

@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Tenancy\TenantScoped;
 
 class Payment extends Model
 {
-    use HasFactory;
+    use HasFactory, TenantScoped;
 
     /**
      * The attributes that are mass assignable.
@@ -17,6 +18,7 @@ class Payment extends Model
      */
     protected $fillable = [
         'id',
+        'tenant_id',
         'cfdi_type',
         'facturama_token',
         'UUID',

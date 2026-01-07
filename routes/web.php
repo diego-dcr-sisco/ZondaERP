@@ -81,6 +81,15 @@ Route::prefix('configuration')
         Route::get('/', [ConfigurationController::class, 'index'])->name('index');
         Route::get('/appearance', [ConfigurationController::class, 'appearance'])->name('appearance');
         Route::put('/appearance/update', [ConfigurationController::class, 'updateAppearance'])->name('appearance.update');
+        // Ruta para subir certificados SAT
+        Route::get('/sat', [ConfigurationController::class, 'satConfiguration'])->name('sat');
+        Route::post('/upload-file', [ConfigurationController::class, 'uploadCertificate'])->name('sat.upload');
+        Route::get('/sat/register-csd',[InvoiceController::class, 'registerCSD'])->name('sat.registerCSD');
+        Route::get('/sat/update-csd',[InvoiceController::class, 'updateCSD'])->name('sat.updateCSD');
+        Route::get('/sat/delete-csd',[InvoiceController::class, 'deleteCSD'])->name('sat.deleteCSD');
+        
+
+
     });
 
 
@@ -146,6 +155,7 @@ Route::prefix('quality')
         Route::get('/customer/{id}/analytics/filter-device-consumption', [QualityController::class, 'deviceConsumptionPrueba'])
             ->name('analytics.filterDeviceConsumption');
 
+        Route::get('/pest-incidents', [QualityController::class, 'pestIncidents'])->name('pestIncidents');
     });
 
 // CRM

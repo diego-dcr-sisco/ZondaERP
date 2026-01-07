@@ -22,7 +22,20 @@ return new class extends Migration
             $table->timestamps();
 
             $table->softDeletes();
+ 
+            // Campos de información fiscal para facturación
+            $table->string('fiscal_name')->nullable(); // razón social (TaxName)
+            $table->string('fiscal_regime')->nullable(); // régimen fiscal (sólo código)
+            $table->string('RFC')->nullable();
+            $table->string('issuance_place')->nullable(); // lugar expedición
+            $table->integer('zip_code')->nullable();
+            $table->string('phone')->nullable();
+            $table->string('license_number')->nullable();
+            $table->string('employer_registration')->nullable();
+            $table->timestamp('validated_at')->nullable(); // validado
+            $table->string('sat_cert_password')->nullable(); // Contraseña de la llave private SAT
             
+
             // NUEVO: Índices para mejorar rendimiento en búsquedas comunes
             $table->index('is_active');
             $table->index('subscription_end');

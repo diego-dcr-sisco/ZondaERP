@@ -12,6 +12,7 @@ return new class extends Migration {
     {
         Schema::create('credit_notes', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('tenant_id')->nullable()->constrained('tenant')->onDelete('cascade');
             $table->foreignId('invoice_id')->constrained('invoices')->onDelete('cascade');
             $table->string('facturama_token')->nullable();
             $table->string('UUID')->nullable();

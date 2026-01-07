@@ -8,6 +8,9 @@ use App\Models\Payment;
 use App\Models\Payroll;
 use Illuminate\Support\Facades\Storage;
 
+use App\Tenancy\TenantManager;
+use App\Models\Tenant;
+
 use \Facturama\Client as FacturamaClient;
 
 class FacturamaService
@@ -51,7 +54,7 @@ class FacturamaService
 
     private function generateJSONInvoice(string $id)
     {
-        $sat_config = config('services.sat');
+        $sat_config = TenantManager::getSatConfiguration();
         $invoice = Invoice::find($id);
         $items = [];
 
@@ -120,14 +123,13 @@ class FacturamaService
 
             'Items' => $items,
         ];
-
-        //dd($invoiceData);
+       
         return $invoiceData;
     }
 
     private function generateJSONCreditNote(string $id)
     {
-        $sat_config = config('services.sat');
+        $sat_config = TenantManager::getSatConfiguration();
         $items = [];
 
         $credit_note = CreditNote::find($id);
@@ -162,6 +164,12 @@ class FacturamaService
             'ExpeditionPlace' => $sat_config['zip_code'],
             'PaymentForm' => $credit_note->payment_form,
             'PaymentMethod' => $credit_note->payment_method,
+            'Folio' => $credit_note->folio,
+            'Issuer' => [ 
+                'FiscalRegime' => $sat_config['tax_regime'],
+                'Rfc' => $sat_config['rfc'],
+                'Name' => $sat_config['business_name']
+            ],
             'Receiver' => [
                 'Name' => $credit_note->receiver_name,
                 'Rfc' => $credit_note->receiver_rfc,
@@ -185,6 +193,7 @@ class FacturamaService
     public function generateJSONPayment(string $id)
     {
         $payment = Payment::find($id);
+        $sat_config = TenantManager::getSatConfiguration();
         $items = [];
         $docs = [];
 
@@ -227,6 +236,11 @@ class FacturamaService
             "NameId" => "14",
             "Folio" => $payment->folio,
             "ExpeditionPlace" => $payment->expedition_place,
+            'Issuer' => [ 
+                'FiscalRegime' => $sat_config['tax_regime'],
+                'Rfc' => $sat_config['rfc'],
+                'Name' => $sat_config['business_name']
+            ],
             "Receiver" => [
                 "Rfc" => $payment->receiver_rfc,
                 "CfdiUse" => $payment->receiver_cfdi_use ?? "CP01",
@@ -361,8 +375,8 @@ class FacturamaService
     {
         try {
             $invoiceJson = $this->generateJSONInvoice($id);
-            //dd(json_encode($invoiceJson));
-            $response = $this->facturama_client->post('/3/cfdis', $invoiceJson);
+
+            $response = $this->facturama_client->post('api-lite/3/cfdis', $invoiceJson);
             return [
                 'success' => true,
                 'data' => $response,
@@ -372,7 +386,7 @@ class FacturamaService
             return [
                 'success' => false,
                 'data' => null,
-                'message' => 'Error: ' . $e->getMessage() . ' Factura: ' . $e->getPrevious()->getMessage()
+                'message' => 'Error: ' . $e->getMessage() . ' Factura: ' . ($e->getPrevious()?->getMessage() ?? '')
             ];
         }
     }
@@ -381,7 +395,7 @@ class FacturamaService
     {
         try {
             $invoiceJson = $this->generateJSONCreditNote($id);
-            $response = $this->facturama_client->post('/3/cfdis', $invoiceJson);
+            $response = $this->facturama_client->post('api-lite/3/cfdis', $invoiceJson);
             return [
                 'success' => true,
                 'data' => $response,
@@ -400,7 +414,7 @@ class FacturamaService
     {
         try {
             $invoiceJson = $this->generateJSONPayment($id);
-            $response = $this->facturama_client->post('/3/cfdis', $invoiceJson);
+            $response = $this->facturama_client->post('api-lite/3/cfdis', $invoiceJson);
             return [
                 'success' => true,
                 'data' => $response,
@@ -420,7 +434,7 @@ class FacturamaService
         try {
             $payrollJson = $this->generateJSONPayroll($id);
             //dd(json_encode($payrollJson, JSON_PRETTY_PRINT));
-            $response = $this->facturama_client->post('/3/cfdis', $payrollJson);
+            $response = $this->facturama_client->post('api-lite/3/cfdis', $payrollJson);
             return [
                 'success' => true,
                 'data' => $response,
@@ -502,7 +516,7 @@ class FacturamaService
         // Guardar usando Storage
         $path = '/stampedXML/' . $filename;
 
-        $saved = Storage::disk('invoice')->put($path, $fileContent);
+        $saved = Storage::disk('public')->put($path, $fileContent);
 
         if ($saved) {
             // Opcional: Retornar información del archivo guardado
@@ -510,11 +524,158 @@ class FacturamaService
                 'success' => true,
                 'message' => 'Archivo guardado exitosamente',
                 'path' => $path,
-                'full_path' => Storage::disk('invoice')->path($path)
+                'full_path' => Storage::disk('public')->path($path)
             ];
         } else {
             throw new \Exception('Error al guardar el archivo en el storage');
         }
+    }
+
+    public function handleCsdRegistration()
+    {
+        $sat_config = TenantManager::getSatConfiguration();
+        
+        if (!$sat_config['rfc']) {
+            throw new \Exception('El tenant no tiene RFC configurado');
+        }
+        if(!$sat_config['sat_cert_password']) {
+            throw new \Exception('El tenant no tiene contraseña de certificado SAT configurada');
+        }
+        
+        $tenantStorage = Storage::disk('public');
+        $certificatePath = $tenantStorage->path('invoices/certificates/certificate.cer');
+        $keyPath = $tenantStorage->path('invoices/certificates/private_key.key');
+        
+        if (!file_exists($certificatePath) || !file_exists($keyPath)) {
+            throw new \Exception('Archivos de certificado no encontrados para el tenant');
+        }
+
+        $data = [
+            "Rfc" => $sat_config['rfc'],
+            "PrivateKeyPassword" => $sat_config['sat_cert_password'], 
+            "Certificate" => $this->fileToBase64($certificatePath),
+            "PrivateKey" => $this->fileToBase64($keyPath),
+            
+        ];
+        
+        try {
+            // Envio de datos a Facturama
+            $response = $this->facturama_client->post('api-lite/csds', $data);
+             return [
+                'success' => true,
+                'data' => $response,
+                'message' => 'CSD registrado exitosamente'
+            ];
+            
+        } catch (\Exception $e) {
+            $errorMessage = 'Error: ' . $e->getMessage(); 
+            return [
+                'success' => false,
+                'data' => null,
+                'message' => $errorMessage
+            ];
+                }
+
+    }
+
+    public function updateCsdRegistration()
+    {
+        $sat_config = TenantManager::getSatConfiguration();
+        $tenantStorage = Storage::disk('public');
+        $certificatePath = $tenantStorage->path('invoices/certificates/certificate.cer');
+        $keyPath = $tenantStorage->path('invoices/certificates/private_key.key');
+        
+        if (!file_exists($certificatePath) || !file_exists($keyPath)) {
+            throw new \Exception('Archivos de certificado no encontrados para el tenant');
+        }
+
+        $data = [
+            "Rfc" => $sat_config['rfc'],
+            "PrivateKeyPassword" => $sat_config['sat_cert_password'], 
+            "Certificate" => $this->fileToBase64($certificatePath),
+            "PrivateKey" => $this->fileToBase64($keyPath),
+            
+        ];
+        
+        try {
+            // Envio de datos a Facturama para actualización
+            $response = $this->facturama_client->put('api-lite/csds/' . $sat_config['rfc'], $data);
+             return [
+                'success' => true,
+                'data' => $response,
+                'message' => 'CSD actualizado exitosamente'
+            ];
+            
+        } catch (\Exception $e) {
+            $errorMessage = 'Error: ' . $e->getMessage();
+            
+            // Solo agregar el mensaje anterior si existe
+            if ($e->getPrevious() !== null) {
+                $errorMessage .= ' Global: ' . $e->getPrevious()->getMessage();
+            }
+            
+            return [
+                'success' => false,
+                'data' => null,
+                'message' => $errorMessage
+            ];
+        }
+
+    }
+
+    private function fileToBase64(string $path): string
+    {
+        if (!file_exists($path)) {
+            throw new \Exception("Archivo no encontrado: $path");
+        }
+        
+        $content = file_get_contents($path);
+        
+        //  eliminar saltos de línea y espacios
+        $cleaned = preg_replace('/\s+/', '', $content);
+        
+        // verificar si es Base64 válido
+        if (!preg_match('/^[A-Za-z0-9+\/]+={0,2}$/', $cleaned)) {
+            // Si no es Base64 válido, codificar el contenido original
+            $cleaned = base64_encode($content);
+            
+            // Limpiar nuevamente 
+            $cleaned = preg_replace('/\s+/', '', $cleaned);
+        } else {
+            \Log::info("El archivo ya está en formato Base64 válido: $path");
+        }
+
+        return $cleaned;
+    }
+
+    public function deleteCsdRegistration()
+    {
+        $sat_config = TenantManager::getSatConfiguration();
+        
+        try {
+            // Envio de datos a Facturama para eliminar CSD
+            $response = $this->facturama_client->delete('api-lite/csds/' . $sat_config['rfc']);
+             return [
+                'success' => true,
+                'data' => $response,
+                'message' => 'CSD eliminado exitosamente'
+            ];
+            
+        } catch (\Exception $e) {
+            $errorMessage = 'Error: ' . $e->getMessage();
+            
+            // Solo agregar el mensaje anterior si existe
+            if ($e->getPrevious() !== null) {
+                $errorMessage .= ' Global: ' . $e->getPrevious()->getMessage();
+            }
+            
+            return [
+                'success' => false,
+                'data' => null,
+                'message' => $errorMessage
+            ];
+        }
+
     }
 }
 

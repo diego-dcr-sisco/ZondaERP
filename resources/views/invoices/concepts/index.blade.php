@@ -132,8 +132,8 @@
                                 <td colspan="11" class="text-center py-5">
                                     <div class="empty-state">
                                         <i class="bi bi-person-circle text-muted fs-1 mb-3"></i>
-                                        <h5 class="text-muted">No hay clientes para mostrar</h5>
-                                        <p class="text-muted mb-0">No se encontraron Contribuyentes en el sistema.
+                                        <h5 class="text-muted">No hay conceptos para mostrar</h5>
+                                        <p class="text-muted mb-0">No se encontraron Conceptos en el sistema.
                                         </p>
                                     </div>
                                 </td>

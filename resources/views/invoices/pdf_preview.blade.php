@@ -238,15 +238,27 @@
     <div class="header">
         <div class="header-row">
             <div class="logo-container">
-                <img src="{{ asset('images/logo.png') }}" style="width: 300px; margin: 0;">
-                <div class="company-name">{{ config('services.sat.business_name') }}</div>
+                @if($logoPath != 'images/zonda/landscape_logo.png')
+                    <img src="data:image/png;base64,{{ base64_encode(Storage::disk('public')->get($logoPath)) }}" style="width: 300px; margin: 0;">
+                @else($logoPath == 'images/zonda/landscape_logo.png')
+                    <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/zonda/landscape_logo.png'))) }}" style="width: 300px; margin: 0;">
+                @endif
+                <div class="company-name">{{ $sat_config['business_name'] }}</div>
                 <div class="document-details">
-                    <div>RFC: {{ config('services.sat.rfc') }}</div>
-                    <div>Régimen Fiscal: {{ config('services.sat.tax_regime') }} -
-                        {{ config('services.sat.tax_regime_name') }}</div>
-                    <div>Teléfono: {{ config('services.company.phone') }}</div>
-                    <div>Licencia Sanitaria: {{ config('services.company.sanitary_license') }} <br>
-                        {{ config('services.company.sanitary_license_2') }}</div>
+                     <div>RFC: {{ $sat_config['rfc'] }}</div>
+                         @php
+                                $regimeCode = $sat_config['tax_regime'];
+                                $regime = collect($taxRegimes)->firstWhere('Value', $regimeCode);
+                            @endphp
+                         <div>Régimen Fiscal: {{ $sat_config['tax_regime'] }} -
+                        {{ $regime['Name'] ?? 'Desconocido' }}</div>
+                        @if($sat_config['phone'] !== null)
+                                <div>Teléfono: {{ $sat_config['phone'] }}</div>
+                        @endif
+                        @if($sat_config['license_number'] !== null)
+                            <div>Licencia Sanitaria: {{ $sat_config['license_number'] }} </div>
+                        @endif
+                    
                 </div>
             </div>
             <div class="document-info">
@@ -255,13 +267,13 @@
                         FACTURA - {{ $invoice->folio ?? 'A' . str_pad($order->id, 5, '0', STR_PAD_LEFT) . '-' . now()->format('Y') }}
                     </div>
                     <div><strong style="font-size:10px;">FOLIO FISCAL (UUID)</strong><br>
-                        <span style="font-size:10px;">{{ $invoice->uuid ?? '' }}</span>
+                        <span style="font-size:10px;">{{ $invoice->UUID ?? '' }}</span>
                     </div>
                     <div><strong style="font-size:10px;">NO. DE SERIE DEL CERTIFICADO DEL EMISOR</strong><br>
-                        <span style="font-size:10px;">{{ config('services.sat.emitter_certificate_number') }}</span>
+                        <span style="font-size:10px;">{{ $invoice->csd_serial_number ?? '' }}</span>
                     </div>
                     <div><strong style="font-size:10px;">LUGAR DE EXPEDICIÓN</strong><br>
-                        <span style="font-size:10px;">{{ config('services.sat.zip_code') }}</span>
+                        <span style="font-size:10px;">{{ $sat_config['address'] }}</span>
                     </div>
                 </div>
             </div>
@@ -272,14 +284,14 @@
         {{-- DATOS DEL EMISOR --}}
         <div>
             <div class="section-title">DATOS DEL EMISOR</div>
-            <div class="info-item"><span class="info-label">Nombre:</span> <span
-                    class="info-value">{{ config('services.sat.business_name') }}</span></div>
-            <div class="info-item"><span class="info-label">RFC:</span> <span
-                    class="info-value">{{ config('services.sat.rfc') }}</span></div>
-            <div class="info-item"><span class="info-label">Regimen Fiscal:</span> <span
-                    class="info-value">{{ config('services.sat.tax_regime_name') }}</span></div>
+                <div class="info-item"><span class="info-label">Nombre:</span> <span
+                    class="info-value">{{ $sat_config['business_name'] }}</span></div>
+                    <div class="info-item"><span class="info-label">RFC:</span> <span
+                    class="info-value">{{ $sat_config['rfc'] }}</span></div>
+                <div class="info-item"><span class="info-label">Régimen Fiscal:</span> <span
+                    class="info-value"> {{ $regime['Name'] ?? 'Desconocido' }}</span></div>
             <div class="info-item"><span class="info-label">Domicilio:</span> <span
-                    class="info-value">{{ config('services.sat.address') }}</span></div>
+                    class="info-value">{{ $sat_config['address'] }}</span></div>
         </div>
         {{-- DATOS DEL RECEPTOR --}}
         <div>
@@ -303,10 +315,10 @@
     {{-- TABLA DE TOTALES --}}
 
     <div class="footer">
-        <p>{{ config('services.sat.business_name') }} • RFC: {{ config('services.sat.rfc') }} •
-            {{ config('services.sat.address') }}, CP {{ config('services.sat.zip_code') }}</p>
-        <p>Teléfono: {{ config('services.company.phone') }} • www.siscoplagas.mx • contacto@zonda</p>
-        <p>Este documento es una representación impresa de un Comprobante Fiscal Digital por Internet</p>
+        <p>{{ $sat_config['business_name'] }} • RFC: {{ $sat_config['rfc'] }} •
+            {{ $sat_config['address'] }}, CP {{ $sat_config['zip_code'] }}</p>
+        <p>Teléfono: {{ $sat_config['phone'] }} • www.zonda.mx • contacto@zonda</p>
+        <p>Este documento es una representación impresa de un Comprobante Fiscal Digital por Internet</p>   
     </div>
 </div>
 

@@ -13,8 +13,7 @@ return new class extends Migration {
 
         Schema::create('invoice_concepts', function (Blueprint $table) {
             $table->id();
-                        $table->foreignId('tenant_id')->nullable()->constrained('tenant')->onDelete('cascade');
-
+            $table->foreignId('tenant_id')->nullable()->constrained('tenant')->onDelete('cascade');
             $table->string('product_key');
             $table->string('name');
             $table->longText('description')->nullable();

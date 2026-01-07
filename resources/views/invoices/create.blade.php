@@ -23,23 +23,39 @@
                 <div class="col-md-6 mb-3">
                     <div class="border border-secondary-subtle shadow-sm rounded p-3 bg-light mb-4">
                         <div class="d-flex flex-column align-items-start mx-3">
-                            <img src="{{ asset('images/logo.png') }}" class="me-3 mb-3" style="width: 240px;">
+                            {{-- <img src="{{ asset('images/logo.png') }}" class="me-3 mb-3" style="width: 240px;"> --}}
+                            @if($logoPath != 'images/zonda/landscape_logo.png')
+                                <img src="data:image/png;base64,{{ base64_encode(Storage::disk('public')->get($logoPath)) }}" class="me-3 mb-3" style="width: 240px;">
+                            @else($logoPath == 'images/zonda/landscape_logo.png')
+                                <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/zonda/landscape_logo.png'))) }}" class="me-3 mb-3" style="width: 240px;">
+                            @endif
                             <div>
-                                <h5 class="mb-1">{{ config('services.sat.business_name') }}</h5>
-                                <small class="text-muted">RFC: {{ config('services.sat.rfc') }}</small>
+                                <!--h5 class="mb-1">{{ config('services.sat.business_name') }}</-->
+                                <h5 class="mb-1">{{$sat_config['business_name']}}</h5>
+                                <!--small class="text-muted">RFC: {{ config('services.sat.rfc') }}</small-->
+                                <small class="text-muted">RFC: {{ $sat_config['rfc'] }}</small>
                             </div>
                         </div>
                         <ul class="list-group list-group-flush mb-3">
+                            @php
+                                $regimeCode = $sat_config['tax_regime'];
+                                $regime = collect($taxRegimes)->firstWhere('Value', $regimeCode);
+                            @endphp
                             <li class="list-group-item">Régimen Fiscal:
-                                <span class="fw-bold">{{ config('services.sat.tax_regime') }} -
-                                    {{ config('services.sat.tax_regime_name') }}</span>
+                                <!-- <span class="fw-bold">{{ config('services.sat.tax_regime') }} -
+                                    {{ config('services.sat.tax_regime_name') }}</span> -->
+                                <span class="fw-bold">{{  $sat_config['tax_regime'] }} -
+                                    {{ $regime['Name'] ?? 'Desconocido' }}</span>
                             </li>
-                            <li class="list-group-item">Teléfono: <strong>{{ config('services.company.phone') }}</strong>
-                            </li>
-                            <li class="list-group-item">Licencia Sanitaria:
-                                <span class="fw-bold">{{ config('services.company.sanitary_license') }}</span>
-                                <span class="fw-bold">{{ config('services.company.sanitary_license_2') }}</span>
-                            </li>
+                             @if($sat_config['phone'] !== null)
+                                <li class="list-group-item">Teléfono: <strong>{{ $sat_config['phone'] }}</strong>
+                                </li>
+                             @endif
+                             @if($sat_config['license_number'] !== null)
+                                <li class="list-group-item">Licencia Sanitaria:
+                                    <span class="fw-bold">{{ $sat_config['license_number'] }}</span>
+                                </li>
+                             @endif
                         </ul>
                     </div>
 

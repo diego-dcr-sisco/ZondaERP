@@ -225,9 +225,17 @@
                             <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-lg-end">
                                 <li><a class="dropdown-item text-light" href="{{ route('config.appearance') }}">
                                         <i class="bi bi-palette2"></i>
-                                        Configurar reporte</a>
+                                            Configurar reporte</a>
+                                        <li>
+                                            <hr class="dropdown-divider">
+                                        </li>
+                                        @if(auth()->user()->isSuperAdmin())
+                                            <a class="dropdown-item text-light" href="{{ route('config.sat') }}">
+                                                <i class="bi bi-folder"></i> Certificados
+                                            </a>
+                                        @endif    
                                 </li>
-                            </ul>
+                            </ul>        
                         </li>
                     @endif
                 @endif

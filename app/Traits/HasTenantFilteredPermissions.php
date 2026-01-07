@@ -14,11 +14,11 @@ trait HasTenantFilteredPermissions
      */
     public function hasTenantPermission($permission, $guardName = null): bool
     {
-        Log::info('Verificando permiso para tenant', [
-            'usuario_id' => $this->id,
-            'permission' => $permission,
-            'guard_name' => $guardName,
-        ]);
+        // Log::info('Verificando permiso para tenant', [
+        //     'usuario_id' => $this->id,
+        //     'permission' => $permission,
+        //     'guard_name' => $guardName,
+        // ]);
         $permissionFilter = app(TenantPermissionFilter::class);
         
         

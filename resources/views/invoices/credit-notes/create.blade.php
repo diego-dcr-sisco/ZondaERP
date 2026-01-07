@@ -464,6 +464,8 @@
                     return;
                 }
 
+                console.log('Poblando items de la factura:', items);
+
                 $.each(items, function(index, item) {
                     const quantity = item.quantity || 1;
                     const unitPrice = item.unit_price || 0;
@@ -485,6 +487,9 @@
                             <input type="number" class="form-control form-control-sm editable-field quantity-field"
                                 name="items[${item.id}][quantity]" value="${quantity}" step="1" min="0"
                                 data-original-value="${quantity}">
+                        </td>
+                        <td>
+                            <input type="hidden" name="items[${item.id}][concept_id]" value="${item.concept_id}">
                         </td>
                         <td>
                             <input type="text" class="form-control form-control-sm bg-body-secondary"
@@ -600,6 +605,7 @@
             btnSelect.on('click', function() {
                 console.log('Seleccionando factura:', selectedInvoice);
                 if (selectedInvoice) {
+                    console.log('Factura seleccionada para poblar el formulario:', selectedInvoice);
                     // Actualizar campos ocultos del formulario
                     $('#selected_invoice_id').val(selectedInvoice.id);
                     $('#selected_uuid').val(selectedInvoice.uuid);

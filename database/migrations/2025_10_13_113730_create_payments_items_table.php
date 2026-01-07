@@ -12,13 +12,12 @@ return new class extends Migration {
     {
         Schema::create('payments_items', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('tenant_id')->nullable()->constrained('tenant')->onDelete('cascade');
             $table->foreignId('payment_id')->constrained('payments')->onDelete('cascade');
             $table->string('payment_form');
             $table->date('payment_date');
             $table->string('amount');
-            $table->string('currency'); //product_key
-            $table->foreignId('tenant_id')->nullable()->constrained('tenant')->onDelete('cascade');
-            $table->foreignId('comercial_zone_id')->constrained('comercial_zones')->onDelete('cascade');
+            $table->string('currency'); //product_key            
             $table->foreignId('customer_id')->constrained('customer')->onDelete('cascade');
             $table->timestamps();
         });

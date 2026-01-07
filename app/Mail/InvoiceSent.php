@@ -7,6 +7,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Storage;
 
 class InvoiceSent extends Mailable
 {
@@ -40,16 +41,17 @@ class InvoiceSent extends Mailable
     public function attachments(): array
     {
         $attachments = [];
+        $tenantStorage = Storage::disk('public');
         
         // Si existe el PDF de la factura, adjuntarlo
-        if ($this->invoice->pdf_file && file_exists(storage_path('app/public/' . $this->invoice->pdf_file))) {
-            $attachments[] = storage_path('app/public/' . $this->invoice->pdf_file);
+        if ($this->invoice->pdf_path && file_exists($tenantStorage->path($this->invoice->pdf_path))) {
+            $attachments[] = $tenantStorage->path($this->invoice->pdf_path);
         }
         
         // Si existe el XML, adjuntarlo
-        if ($this->invoice->xml_file && file_exists(storage_path('app/public/' . $this->invoice->xml_file))) {
-            $attachments[] = storage_path('app/public/' . $this->invoice->xml_file);
-        }
+        if ($this->invoice->xml_file && file_exists($tenantStorage->path($this->invoice->xml_file))) {
+            $attachments[] = $tenantStorage->path($this->invoice->xml_file);
+        }     
         
         return $attachments;
     }

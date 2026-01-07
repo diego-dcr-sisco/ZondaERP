@@ -13,6 +13,7 @@
         <form class="form p-3" action="{{ route('invoices.payments.store') }}" method="POST" enctype="">
             @csrf
             <input type="hidden" id="selected_invoices_data" name="selected_invoices_data">
+            <input type="hidden" id="invoice_customer_id" name="invoice_customer_id">
 
             <!-- Inputs hidden para almacenar los invoice_ids -->
             <div id="selected_invoices_ids_container">
@@ -357,7 +358,8 @@
                                    data-tax-rate="${invoice.tax_rate || 0.16}"
                                    data-tax-total="${invoice.tax_total || 0}"
                                    data-subtotal="${invoice.subtotal || 0}"
-                                   data-tax-object="${invoice.tax_object || '02'}">
+                                   data-tax-object="${invoice.tax_object || '02'}"
+                                   data-customer-id="${invoice.invoice_customer_id || ''}">
                         </td>
                         <td>${invoice.serie}-${invoice.folio}</td>
                         <td>${invoice.receiver_name}</td>
@@ -768,7 +770,8 @@
                             tax_rate: $(this).data('tax-rate'),
                             tax_total: $(this).data('tax-total'),
                             subtotal: $(this).data('subtotal'),
-                            tax_object: $(this).data('tax-object')
+                            tax_object: $(this).data('tax-object'),
+                            customer_id: $(this).data('customer-id')
                         };
                         selectedInvoicesForPayment.push(invoice);
                     } else {
@@ -781,6 +784,10 @@
                 updateBadge();
                 updateSubmitButton();
                 modal.hide();
+                if (selectedInvoicesForPayment.length > 0) {
+                    const firstInvoice = selectedInvoicesForPayment[0];
+                    $('#invoice_customer_id').val(firstInvoice.customer_id || '');
+                }
 
                 // Limpiar filtros del modal
                 $('#modal_invoice_folio, #modal_social_reason, #modal_rfc, #modal_issued_date').val('');
@@ -793,6 +800,7 @@
                 const receiverTaxZipCode = $('#receiver_tax_zip_code').val();
                 const receiverCfdiUse = $('#receiver_cfdi_use').val();
                 const receiverFiscalRegime = $('#receiver_fiscal_regime').val();
+                const customerId = $('#invoice_customer_id').val();
 
                 const paymentsArray = payments.map(payment => {
                     const paymentElement = $(`.payment-item[data-payment-id="${payment.id}"]`);
@@ -860,6 +868,7 @@
                     "CfdiType": "P",
                     "NameId": "14",
                     "Folio": "93",
+                    "CustomerId": customerId,
                     "ExpeditionPlace": expeditionPlace,
                     "Receiver": {
                         "Rfc": receiverRfc,
